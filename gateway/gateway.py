@@ -10,7 +10,7 @@ import os
 import asyncio
 import requests
 from requests.exceptions import RequestException
-from chess_utils import Move, stream_key_from_id, parse_stream_output
+from chess_utils import Move, stream_key_from_id
 from redis import Redis
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Response
 from fastapi import Body, status
@@ -33,23 +33,20 @@ async def get_game(websocket: WebSocket, game_id: int):
 
     await websocket.accept()
 
-    # send existing moves to client
-    moves = redis.xread({stream_key: 0})
-    for move in parse_stream_output(moves):
-
-        # schedule a message and sleep until completion
-        await websocket.send_json(move)
-        await asyncio.sleep(0)
-
     try:
+
+        ts = 0
 
         # listen on stream and send new moves to client
         while True:
 
-            # block until new move is read, then send it
-            moves = redis.xread({stream_key: "$"}, count=1, block=0)
-            moves = parse_stream_output(moves)
-            await websocket.send_json(moves[0])
+            # read move and timestamp
+            move = redis.xread({stream_key: ts}, count=1, block=0)
+            ts = move[0][1][0][0]
+            move_data = move[0][1][0][1]
+
+            # send move
+            await websocket.send_json(move_data)
             await asyncio.sleep(0)
 
     except WebSocketDisconnect:
