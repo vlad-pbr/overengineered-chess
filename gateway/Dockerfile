@@ -4,4 +4,4 @@ EXPOSE 8000
 COPY . .
 RUN python3.8 -m pip install -r ./requirements.txt
 ENTRYPOINT [ "/usr/local/bin/gunicorn" ]
-CMD [ "gateway:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000" ]
+CMD [ "gateway:app", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker", "--timeout", "0", "--bind", "0.0.0.0:8000" ]
