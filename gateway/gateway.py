@@ -8,9 +8,12 @@ move validator microservice.
 
 import os
 import asyncio
-from chess_utils import stream_key_from_id, parse_stream_output
+import requests
+from requests.exceptions import RequestException
+from chess_utils import Move, stream_key_from_id, parse_stream_output
 from redis import Redis
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Response, status
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Response
+from fastapi import Body, status
 
 redis = Redis(  host=os.getenv("REDIS_HOST", "localhost"),
                 port=int(os.getenv("REDIS_PORT", "6379")),
@@ -23,8 +26,12 @@ async def get_game(websocket: WebSocket, game_id: int):
     
     """Sends game moves to client via websocket."""
 
-    await websocket.accept()
+    # make sure game exists
     stream_key = stream_key_from_id(game_id)
+    if redis.exists(stream_key) == 0:
+        return Response(status_code=status.WS_1008_POLICY_VIOLATION)
+
+    await websocket.accept()
 
     # send existing moves to client
     moves = redis.xread({stream_key: 0})
@@ -66,8 +73,24 @@ def new_game(game_id: int):
     ts = redis.xadd(stream_key, {"a":"b"})
     redis.xdel(stream_key, ts)
 
-@app.post("/game/{game_id}/move", status_code=status.HTTP_201_CREATED)
-def perform_move(game_id: int):
+@app.post("/move", status_code=status.HTTP_201_CREATED)
+def perform_move(move: Move = Body()):
 
-    # TODO query move-validator for validation
-    pass
+    # make sure game exists
+    stream_key = stream_key_from_id(move.game_id)
+    if redis.exists(stream_key) == 0:
+        return Response(status_code=status.HTTP_400_BAD_REQUEST)
+
+    try:
+
+        # post move to move validator
+        response = requests.post(   os.getenv("MOVE_VALIDATOR_ENDPOINT", "http://localhost:8001/validate"),
+                                    data=move.json(),
+                                    timeout=0)
+
+    except RequestException:
+        return Response(status_code=status.HTTP_502_BAD_GATEWAY)
+
+    # 400 from move validator - invalid move
+    if response.status_code == 400:
+        return Response(status_code=status.HTTP_400_BAD_REQUEST)
