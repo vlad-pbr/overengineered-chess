@@ -21,6 +21,8 @@ app = FastAPI()
 @app.post("/validate", status_code=status.HTTP_201_CREATED)
 def validate_move(move: Move = Body()):
 
+    """Makes sure provided move is valid. Notifies endgame validator."""
+
     stream_key = stream_key_from_id(move.game_id)
 
     # TODO actually check the move
