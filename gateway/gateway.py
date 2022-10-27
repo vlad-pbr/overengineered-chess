@@ -73,6 +73,8 @@ def new_game(game_id: int):
 @app.post("/move", status_code=status.HTTP_201_CREATED)
 def perform_move(move: Move = Body()):
 
+    """Performs move by delegating to move validator."""
+
     # make sure game exists
     stream_key = stream_key_from_id(move.game_id)
     if redis.exists(stream_key) == 0:
