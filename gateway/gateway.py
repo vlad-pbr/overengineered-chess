@@ -86,7 +86,7 @@ def perform_move(move: Move = Body()):
         # post move to move validator
         response = requests.post(   os.getenv("MOVE_VALIDATOR_ENDPOINT", "http://localhost:8001/validate"),
                                     data=move.json(),
-                                    timeout=0)
+                                    timeout=10)
 
     except RequestException:
         return Response(status_code=status.HTTP_502_BAD_GATEWAY)
