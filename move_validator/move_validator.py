@@ -26,4 +26,4 @@ def validate_move(move: Move = Body()):
     # TODO actually check the move
 
     # notify endgame validator
-    redis.xadd(os.getenv("ENDGAME_STREAM_NAME", "endgame"), {"game":stream_key})
+    redis.xadd(os.getenv("ENDGAME_STREAM_NAME", "endgame"), move.dict())
