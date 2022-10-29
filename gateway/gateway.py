@@ -70,21 +70,22 @@ def new_game(game_id: int):
     ts = redis.xadd(stream_key, {"a":"b"})
     redis.xdel(stream_key, ts)
 
-@app.post("/move", status_code=status.HTTP_201_CREATED)
-def perform_move(move: Move = Body()):
+@app.post("/game/{game_id}/move", status_code=status.HTTP_201_CREATED)
+def perform_move(game_id: int, move: Move = Body()):
 
     """Performs move by delegating to move validator."""
 
     # make sure game exists
-    stream_key = stream_key_from_id(move.game_id)
+    stream_key = stream_key_from_id(game_id)
     if redis.exists(stream_key) == 0:
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
     try:
 
         # post move to move validator
-        response = requests.post(   os.getenv("MOVE_VALIDATOR_ENDPOINT", "http://localhost:8001/validate"),
+        response = requests.post(   os.getenv("MOVE_VALIDATOR_ENDPOINT", f"http://localhost:8001/validate"),
                                     data=move.json(),
+                                    params={ "game_id": game_id },
                                     timeout=10)
 
     except RequestException:
