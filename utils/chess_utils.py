@@ -2,7 +2,6 @@
 
 from abc import ABC, abstractmethod
 from typing import Literal
-from xmlrpc.client import Boolean
 from pydantic import BaseModel
 
 # list of all valid axis values
