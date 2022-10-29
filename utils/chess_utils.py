@@ -97,6 +97,8 @@ class Rook(ChessPiece):
                 c.y += i[1]
                 piece = board.get(c)
 
+        return out
+
 class Knight(ChessPiece):
     
     def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
@@ -166,8 +168,25 @@ class ChessBoard():
         except IndexError:
             return False
 
-    def move(move: Move) -> bool:
-        pass
+    def move(self, move: Move) -> bool:
+
+        piece = self.get(move.src_coordinate)
+
+        # make sure source is a valid piece
+        if not piece:
+            return False
+
+        piece = ChessPiece(piece)
+
+        # make sure move itself is valid
+        if move.dest_coordinate not in piece.get_valid_moves(self, move.src_coordinate):
+            return False
+
+        # move piece
+        self._matrix[move.src_coordinate.y][move.src_coordinate.x] = None
+        self._matrix[move.dest_coordinate.y][move.dest_coordinate.x] = piece
+
+        return True
 
 def stream_key_from_id(id: int) -> str:
 
