@@ -135,17 +135,32 @@ class Knight(ChessPiece):
 class Bishop(ChessPiece):
 
     def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
-        pass
+        
+        out = []
+
+        # TODO implement
+
+        return out
 
 class Queen(ChessPiece):
     
     def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
-        pass
+        
+        out = []
+
+        # TODO implement
+
+        return out
 
 class King(ChessPiece):
     
     def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
-        pass
+
+        out = []
+
+        # TODO implement
+
+        return out
 
 class ChessBoard:
 
@@ -216,7 +231,7 @@ class ChessBoard:
         """
         Gets an element from the chess board.
         Returns ChessPiece if there is a chess price.
-        Returns None is no chess piece.
+        Returns None if no chess piece.
         Returns False if coordinate out of bounds.
         """
 
