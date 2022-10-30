@@ -9,7 +9,6 @@ logged to the game stream.
 import os
 import logging
 from redis import Redis
-from sklearn.linear_model import GammaRegressor
 from chess_utils import stream_key_from_id
 
 logger = logging.getLogger(__name__)
