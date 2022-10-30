@@ -1,9 +1,8 @@
 #!/usr/bin/env python3.8
 
-import logging
-from abc import ABC, abstractmethod
+import json
 from typing import Literal
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from redis import Redis
 
 # list of all valid axis values
@@ -14,23 +13,18 @@ class Coordinate(BaseModel):
     x: Literal[VALID_COORDINATE] # pylance does not like this for some reason
     y: Literal[VALID_COORDINATE]
 
-    def __init__(self, x: Literal[VALID_COORDINATE], y: Literal[VALID_COORDINATE]) -> None:
-        self.x = x
-        self.y = y
+    @staticmethod
+    def from_literals(x: Literal[VALID_COORDINATE], y: Literal[VALID_COORDINATE]) -> 'Coordinate':
+        return Coordinate(**{ "x": x, "y": y })
 
 class Move(BaseModel):
     src_coordinate: Coordinate
     dest_coordinate: Coordinate
 
-class ChessPiece(ABC):
+class ChessPiece():
 
     def __init__(self, is_white: bool) -> None:
-        super().__init__()
         self.is_white = is_white
-
-    @abstractmethod
-    def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
-        pass
 
 class Pawn(ChessPiece):
     
@@ -44,7 +38,10 @@ class Pawn(ChessPiece):
         for i in [1] + ([2] if self.first_move else []):
 
             # derive xy of current iteration
-            c = Coordinate(coordinate.x, coordinate.y + (-i if self.is_white else i))
+            try:
+                c = Coordinate.from_literals(coordinate.x, coordinate.y + (-i if self.is_white else i))
+            except ValidationError:
+                break
 
             # if any piece obstructs the move - not a valid move
             if board.get(c) == None:
@@ -56,9 +53,12 @@ class Pawn(ChessPiece):
         for i in [1, -1]:
 
             # derive xy of current iteration
-            c = Coordinate(coordinate.x + i, coordinate.y + (-1 if self.is_white else 1))
+            try:
+                c = Coordinate.from_literals(coordinate.x + i, coordinate.y + (-1 if self.is_white else 1))
+            except ValidationError:
+                continue
 
-            piece = board.get(c.x, c.y)
+            piece = board.get(c)
 
             # if a chess piece exists and is of different color - capture
             if piece and ChessPiece(piece).is_white != self.is_white:
@@ -74,7 +74,7 @@ class Rook(ChessPiece):
 
         for i in [ (0,1), (0,-1), (1,0), (-1,0) ]:
 
-            c = Coordinate(coordinate.x + i[0], coordinate.y + i[1])
+            c = Coordinate.from_literals(coordinate.x + i[0], coordinate.y + i[1])
             piece = board.get(c)
 
             # while within borders
@@ -142,20 +142,19 @@ class ChessBoard:
 
                 if move:
 
-                    # parse move and store timestamp
-                    [[_, move_dict]] = move
-                    self.ts = move_dict[0]
+                    # store timestamp and return parsed move
+                    self.ts = move[0][1][0][0]
 
-                    return Move(**move_dict[1])
+                    return Move(**json.loads(move[0][1][0][1]["data"]))
 
                 raise StopIteration
 
         # init empty chess board matrix
-        self._matrix = [[None]*8]*8
+        self._matrix = [ [None for _ in range(0,8)] for _ in range(0,8) ]
 
         # spawn pawns
         for y in [ (1, False), (6, True) ]:
-            for x in range(1,9):
+            for x in range(0,8):
                 self._matrix[y[0]][x] = Pawn(y[1])
 
         # spawn rooks
@@ -206,8 +205,6 @@ class ChessBoard:
         # make sure source is a valid piece
         if not piece:
             return False
-
-        piece = ChessPiece(piece)
 
         # make sure move itself is valid
         if move.dest_coordinate not in piece.get_valid_moves(self, move.src_coordinate):

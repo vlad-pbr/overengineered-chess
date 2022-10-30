@@ -10,6 +10,7 @@ import os
 import asyncio
 import requests
 import logging
+import json
 from requests.exceptions import RequestException
 from chess_utils import Move, stream_key_from_id
 from redis import Redis
@@ -50,11 +51,10 @@ async def get_game(websocket: WebSocket, game_id: int):
         while True:
 
             # read move and timestamp
-            logger.info(
-                f"""[{websocket.client.host}:{websocket.client.port}] awaiting move for game id {game_id}""")
+            logger.info(f"""[{websocket.client.host}:{websocket.client.port}] awaiting move for game id {game_id}""")
             move = redis.xread({stream_key: ts}, count=1, block=0)
             ts = move[0][1][0][0]
-            move_data = move[0][1][0][1]
+            move_data = json.loads(move[0][1][0][1]["data"])
 
             # send move
             logger.info(f"[{websocket.client.host}:{websocket.client.port}] sending move for game id {game_id}: {move_data}")
@@ -96,9 +96,7 @@ def perform_move(game_id: int, move: Move = Body()):
 
     try:
 
-        logger.info(
-            f"delegating game id {game_id} move validation \
-            for the following move: {move}")
+        logger.info(f"delegating game id {game_id} move validation for the following move: {move.dict()}")
 
         # post move to move validator
         response = requests.post(   os.getenv(
@@ -108,9 +106,13 @@ def perform_move(game_id: int, move: Move = Body()):
                                     params={ "game_id": game_id },
                                     timeout=10)
 
+        # raise exception on server-side errors
+        logger.debug(response.status_code)
+        if response.status_code >= 500:
+            response.raise_for_status()
+
     except RequestException as e:
-        logger.warn(f"an error occurred while validating move {move} \
-                    for game id {game_id}: {e}")
+        logger.warn(f"an error occurred while validating move for game id {game_id}: {e}")
         return Response(status_code=status.HTTP_502_BAD_GATEWAY)
 
     # 400 from move validator - invalid move

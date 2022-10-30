@@ -9,8 +9,9 @@ via redis stream.
 
 import os
 import logging
+import json
 from redis import Redis
-from chess_utils import Move, ChessBoard
+from chess_utils import Move, ChessBoard, stream_key_from_id
 from fastapi import FastAPI, Response, Body, status
 from fastapi.logger import logger as fastapi_logger
 
@@ -39,6 +40,10 @@ def validate_move(game_id: int, move: Move = Body()):
     if not board.move(move):
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
+    # append move to game
+    logger.info(f"appending valid move to game id {game_id}: {move}")
+    redis.xadd(stream_key_from_id(game_id), { "data": json.dumps(move.dict()) } )
+
     # notify endgame validator
     logger.info(f"sending game id {game_id} move notification to endgame validator")
-    redis.xadd(os.getenv("ENDGAME_STREAM_NAME", "endgame"), move.dict())
+    redis.xadd(os.getenv("ENDGAME_STREAM_NAME", "endgame"), { "game_id": game_id } )
