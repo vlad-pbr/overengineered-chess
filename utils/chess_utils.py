@@ -121,8 +121,34 @@ class King(ChessPiece):
 
 class ChessBoard:
 
-    def __init__(self) -> None:
+    def __init__(self, game_id: int, redis: Redis) -> None:
         
+        # custom game move iterator, because why not
+        class Game:
+
+            def __init__(self, game_id: int, redis: Redis):
+                self.redis = redis
+                self.stream_key = stream_key_from_id(game_id)
+                self.ts = 0
+
+            def __iter__(self):
+                return self
+
+            def __next__(self) -> Move:
+                
+                # read next move from redis
+                move = redis.xread({self.stream_key: self.ts}, count=1, block=1000)
+
+                if move:
+
+                    # parse move and store timestamp
+                    [[_, move_dict]] = move
+                    self.ts = move_dict[0]
+
+                    return Move(**move_dict[1])
+
+                raise StopIteration
+
         # init empty chess board matrix
         self._matrix = [[None]*8]*8
 
@@ -153,6 +179,10 @@ class ChessBoard:
         # spawn kings
         for y in [ (0, False), (7, True) ]:
             self._matrix[y[0]][4] = King(y[1])
+
+        # add each move to chessboard
+        for move in Game(game_id, redis):
+            self.move(move)
 
     def get(self, c: Coordinate):
 
@@ -187,44 +217,6 @@ class ChessBoard:
         self._matrix[move.dest_coordinate.y][move.dest_coordinate.x] = piece
 
         return True
-
-def chessboard_by_game_id(game_id: int, redis: Redis) -> ChessBoard:
-
-    # custom game move iterator, because why not
-    class Game:
-
-        def __init__(self, game_id: int, redis: Redis):
-            self.redis = redis
-            self.stream_key = stream_key_from_id(game_id)
-            self.ts = 0
-
-        def __iter__(self):
-            return self
-
-        def __next__(self) -> Move:
-            
-            # read next move from redis
-            move = redis.xread({self.stream_key: self.ts}, count=1, block=1000)
-
-            if move:
-
-                # parse move and store timestamp
-                [[_, move_dict]] = move
-                self.ts = move_dict[0]
-
-                return Move(**move_dict[1])
-
-            raise StopIteration
-
-    # init board and game
-    board = ChessBoard()
-    game = Game(game_id, redis)
-
-    # add each move to chessboard
-    for move in game:
-        board.move(move)
-
-    return board
 
 def stream_key_from_id(id: int) -> str:
 
