@@ -9,7 +9,7 @@ logged to the game stream.
 import os
 import logging
 from redis import Redis
-from chess_utils import stream_key_from_id
+from chess_utils import ChessBoard
 
 logger = logging.getLogger(__name__)
 redis = Redis(  host=os.getenv("REDIS_HOST", "localhost"),
@@ -27,18 +27,22 @@ def main():
 
         # read single endgame message
         move = redis.xread({ENDGAME_STREAM_NAME: 0}, count=1, block=0)
-        move_ts = move[0][1][0][0]
-        move_data = move[0][1][0][1]
+        message_ts = move[0][1][0][0]
+        game_id = int(move[0][1][0][1]["game_id"])
 
-        logger.info(f"received notification from endgame validator")
+        logger.info(f"received notification for end validation for game {game_id}")
+
+        # get board of current game
+        board = ChessBoard(game_id, redis)
 
         # TODO actually check if endgame
 
-        # remove handled move from stream and add move to game
-        logger.info(f"adding move to move stream")
-        redis.xdel(ENDGAME_STREAM_NAME, move_ts)
-        redis.xadd( stream_key_from_id(move_data["game_id"]),
-                    { k:v for k,v in move_data.items() if k != "game_id" })
+        # if endgame detected
+        if False:
+
+            # remove handled move from stream and add move to game
+            logger.info("marking completion of event")
+            redis.xdel(ENDGAME_STREAM_NAME, message_ts)
 
 if __name__ == "__main__":
     main()
