@@ -68,7 +68,7 @@ async def join_game(websocket: WebSocket, game_id: int):
         return Response(status_code=status.WS_1008_POLICY_VIOLATION)
 
     # transmit moves
-    transmit_game(websocket, game_id)
+    await transmit_game(websocket, game_id)
 
 @app.websocket("/game/{game_id}/create")
 async def new_game(websocket: WebSocket, game_id: int):
@@ -94,7 +94,7 @@ async def new_game(websocket: WebSocket, game_id: int):
     logger.info(f"created game with id {game_id}")
 
     # transmit moves
-    transmit_game(websocket, game_id)
+    await transmit_game(websocket, game_id)
 
     # once socket has been disconnected - delete game
     redis.delete(stream_key)
