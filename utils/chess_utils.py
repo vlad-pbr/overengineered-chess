@@ -1,5 +1,6 @@
 #!/usr/bin/env python3.8
 
+import logging
 from abc import ABC, abstractmethod
 from typing import Literal
 from pydantic import BaseModel
