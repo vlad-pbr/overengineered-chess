@@ -3,13 +3,14 @@
 from abc import ABC, abstractmethod
 from typing import Literal
 from pydantic import BaseModel
+from redis import Redis
 
 # list of all valid axis values
 VALID_COORDINATE = tuple([*range(0,8)])
 
 class Coordinate(BaseModel):
 
-    x: Literal[VALID_COORDINATE]
+    x: Literal[VALID_COORDINATE] # pylance does not like this for some reason
     y: Literal[VALID_COORDINATE]
 
     def __init__(self, x: Literal[VALID_COORDINATE], y: Literal[VALID_COORDINATE]) -> None:
@@ -17,7 +18,7 @@ class Coordinate(BaseModel):
         self.y = y
 
 class Move(BaseModel):
-    src_coordinate: Coordinate # pylance does not like this for some reason
+    src_coordinate: Coordinate
     dest_coordinate: Coordinate
 
 class ChessPiece(ABC):
@@ -118,7 +119,7 @@ class King(ChessPiece):
     def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
         pass
 
-class ChessBoard():
+class ChessBoard:
 
     def __init__(self) -> None:
         
@@ -186,6 +187,44 @@ class ChessBoard():
         self._matrix[move.dest_coordinate.y][move.dest_coordinate.x] = piece
 
         return True
+
+def chessboard_by_game_id(game_id: int, redis: Redis) -> ChessBoard:
+
+    # custom game move iterator, because why not
+    class Game:
+
+        def __init__(self, game_id: int, redis: Redis):
+            self.redis = redis
+            self.stream_key = stream_key_from_id(game_id)
+            self.ts = 0
+
+        def __iter__(self):
+            return self
+
+        def __next__(self) -> Move:
+            
+            # read next move from redis
+            move = redis.xread({self.stream_key: self.ts}, count=1, block=1000)
+
+            if move:
+
+                # parse move and store timestamp
+                [[_, move_dict]] = move
+                self.ts = move_dict[0]
+
+                return Move(**move_dict[1])
+
+            raise StopIteration
+
+    # init board and game
+    board = ChessBoard()
+    game = Game(game_id, redis)
+
+    # add each move to chessboard
+    for move in game:
+        board.move(move)
+
+    return board
 
 def stream_key_from_id(id: int) -> str:
 
