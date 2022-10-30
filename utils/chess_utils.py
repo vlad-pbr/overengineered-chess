@@ -165,7 +165,7 @@ class ChessBoard:
             def __next__(self) -> Move:
                 
                 # read next move from redis
-                move = redis.xread({self.stream_key: self.ts}, count=1, block=1000)
+                move = redis.xread({self.stream_key: self.ts}, count=1)
 
                 if move:
 
