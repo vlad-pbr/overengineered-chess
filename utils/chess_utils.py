@@ -61,7 +61,7 @@ class Pawn(ChessPiece):
             piece = board.get(c)
 
             # if a chess piece exists and is of different color - capture
-            if piece and ChessPiece(piece).is_white != self.is_white:
+            if piece and piece.is_white != self.is_white:
                 out.append(c)
 
         return out
@@ -74,36 +74,63 @@ class Rook(ChessPiece):
 
         for i in [ (0,1), (0,-1), (1,0), (-1,0) ]:
 
-            c = Coordinate.from_literals(coordinate.x + i[0], coordinate.y + i[1])
-            piece = board.get(c)
+            try:
 
-            # while within borders
-            while piece != False:
+                c = Coordinate.from_literals(coordinate.x + i[0], coordinate.y + i[1])
+                piece = board.get(c)
 
-                # if piece is encountered
-                if piece:
+                # while within borders
+                while piece != False:
 
-                    # if piece is of opposite color - capture
-                    if ChessPiece(piece).is_white != self.is_white:
+                    # if piece is encountered
+                    if piece:
+
+                        # if piece is of opposite color - capture
+                        if piece.is_white != self.is_white:
+                            out.append(c)
+
+                        break
+
+                    # empty spot
+                    else:
                         out.append(c)
 
-                    break
+                    # advance
+                    c.x += i[0]
+                    c.y += i[1]
+                    piece = board.get(c)
 
-                # empty spot
-                else:
-                    out.append(c)
-
-                # advance
-                c.x += i[0]
-                c.y += i[1]
-                piece = board.get(c)
+            except ValidationError:
+                continue
 
         return out
 
 class Knight(ChessPiece):
     
     def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
-        pass
+
+        out = []
+
+        # iterate all possible knight offsets
+        for i in [ 
+            (-1, -2), (1, -2),
+            (2, -1), (2, 1),
+            (-1, 2), (1, 2),
+            (-2, -1), (-2, 1)
+            ]:
+
+            try:
+                c = Coordinate.from_literals(coordinate.x + i[0], coordinate.y + i[1])
+            except ValidationError:
+                continue
+
+            piece = board.get(c)
+
+            # if empty space or opposite pawn - append
+            if piece == None or (piece and piece.is_white != self.is_white):
+                out.append(c)
+
+        return out
 
 class Bishop(ChessPiece):
 
