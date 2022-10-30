@@ -29,23 +29,16 @@ redis = Redis(  host=os.getenv("REDIS_HOST", "localhost"),
                 decode_responses=True)
 app = FastAPI()
 
-@app.websocket("/game/{game_id}")
-async def get_game(websocket: WebSocket, game_id: int):
+async def transmit_game(websocket: WebSocket, game_id: int):
     
-    """Sends game moves to client via websocket."""
-
-    # make sure game exists
-    stream_key = stream_key_from_id(game_id)
-    if redis.exists(stream_key) == 0:
-        return Response(status_code=status.WS_1008_POLICY_VIOLATION)
-
     # accept connection
     await websocket.accept()
     logger.info(f"accepted WS connection from {websocket.client.host}:{websocket.client.port}")
 
-    try:
+    ts = 0
+    stream_key = stream_key_from_id(game_id)
 
-        ts = 0
+    try:
 
         # listen on stream and send new moves to client
         while True:
@@ -62,18 +55,35 @@ async def get_game(websocket: WebSocket, game_id: int):
             await asyncio.sleep(0)
 
     except WebSocketDisconnect:
-        pass # connection is closed, nothing to do
+        pass
 
-@app.post("/game/{game_id}", status_code=status.HTTP_201_CREATED)
-def new_game(game_id: int):
+@app.websocket("/game/{game_id}/join")
+async def join_game(websocket: WebSocket, game_id: int):
+    
+    """Simply sends game moves to client via websocket."""
 
-    """Creates a new redis stream for given game id."""
+    # make sure game exists
+    stream_key = stream_key_from_id(game_id)
+    if redis.exists(stream_key) == 0:
+        return Response(status_code=status.WS_1008_POLICY_VIOLATION)
+
+    # transmit moves
+    transmit_game(websocket, game_id)
+
+@app.websocket("/game/{game_id}/create")
+async def new_game(websocket: WebSocket, game_id: int):
+
+    """
+    Creates a new redis stream for given game id.
+    Then transmits game moves via websocket.
+    Finally deletes the redis stream on socket disconnect.
+    """
 
     stream_key = stream_key_from_id(game_id)
 
     # make sure no duplicate game
     if redis.exists(stream_key) != 0:
-        return Response(status_code=status.HTTP_400_BAD_REQUEST)
+        return Response(status_code=status.WS_1008_POLICY_VIOLATION)
     
     # create new stream
     #
@@ -82,6 +92,12 @@ def new_game(game_id: int):
     ts = redis.xadd(stream_key, {"a":"b"})
     redis.xdel(stream_key, ts)
     logger.info(f"created game with id {game_id}")
+
+    # transmit moves
+    transmit_game(websocket, game_id)
+
+    # once socket has been disconnected - delete game
+    redis.delete(stream_key)
 
 @app.post("/game/{game_id}/move", status_code=status.HTTP_201_CREATED)
 def perform_move(game_id: int, move: Move = Body()):
