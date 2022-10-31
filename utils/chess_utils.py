@@ -258,6 +258,11 @@ class ChessBoard:
 
         return True
 
+def game_exists(game_id: int, redis: Redis) -> bool:
+    
+    stream_key = stream_key_from_id(game_id)
+    return redis.exists(stream_key) != 0 and redis.ttl(stream_key) == -1
+
 def stream_key_from_id(id: int) -> str:
 
     """Outputs stream key by game id so all stream names follow the same format."""

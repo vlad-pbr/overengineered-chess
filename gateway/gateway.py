@@ -12,7 +12,7 @@ import requests
 import logging
 import json
 from requests.exceptions import RequestException
-from chess_utils import Move, Coordinate, ChessBoard, stream_key_from_id
+from chess_utils import Move, Coordinate, ChessBoard, stream_key_from_id, game_exists
 from redis import Redis
 from fastapi import FastAPI, WebSocket, Response
 from starlette.websockets import WebSocketState, WebSocketDisconnect
@@ -84,8 +84,7 @@ async def join_game(websocket: WebSocket, game_id: int):
     """Simply sends game moves to client via websocket."""
 
     # make sure game exists
-    stream_key = stream_key_from_id(game_id)
-    if redis.exists(stream_key) == 0:
+    if not game_exists(game_id, redis):
         return Response(status_code=status.WS_1008_POLICY_VIOLATION)
 
     # transmit moves
@@ -103,7 +102,7 @@ async def new_game(websocket: WebSocket, game_id: int):
     stream_key = stream_key_from_id(game_id)
 
     # make sure no duplicate game
-    if redis.exists(stream_key) != 0:
+    if game_exists(game_id, redis):
         return Response(status_code=status.WS_1008_POLICY_VIOLATION)
     
     # create new stream
@@ -127,9 +126,7 @@ def perform_move(game_id: int, move: Move = Body()):
     """Performs move by delegating to move validator."""
 
     # make sure game exists
-    stream_key = stream_key_from_id(game_id)
-    if redis.exists(stream_key) == 0:
-        logger.info(f"game id {game_id} not found")
+    if not game_exists(game_id, redis):
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
     try:
@@ -145,7 +142,6 @@ def perform_move(game_id: int, move: Move = Body()):
                                     timeout=10)
 
         # raise exception on server-side errors
-        logger.debug(response.status_code)
         if response.status_code >= 500:
             response.raise_for_status()
 
@@ -161,9 +157,7 @@ def perform_move(game_id: int, move: Move = Body()):
 def suggest_move(game_id: int, coordinate: Coordinate = Body()):
 
     # make sure game exists
-    stream_key = stream_key_from_id(game_id)
-    if redis.exists(stream_key) == 0:
-        logger.info(f"game id {game_id} not found")
+    if not game_exists(game_id, redis):
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
     # read current game

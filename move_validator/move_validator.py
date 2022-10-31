@@ -11,7 +11,7 @@ import os
 import logging
 import json
 from redis import Redis
-from chess_utils import Move, ChessBoard, stream_key_from_id
+from chess_utils import Move, ChessBoard, stream_key_from_id, game_exists
 from fastapi import FastAPI, Response, Body, status
 from fastapi.logger import logger as fastapi_logger
 
@@ -32,6 +32,10 @@ def validate_move(game_id: int, move: Move = Body()):
     """Makes sure provided move is valid. Notifies endgame validator."""
 
     logger.info(f"validating move for game id {game_id}: {move}")
+
+    # make sure game exists
+    if not game_exists(game_id, redis):
+        return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
     # init board for given game
     board = ChessBoard(game_id, redis)

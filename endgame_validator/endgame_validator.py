@@ -9,7 +9,7 @@ logged to the game stream.
 import os
 import logging
 from redis import Redis
-from chess_utils import ChessBoard, stream_key_from_id
+from chess_utils import ChessBoard, stream_key_from_id, game_exists
 
 logger = logging.getLogger(__name__)
 redis = Redis(  host=os.getenv("REDIS_HOST", "localhost"),
@@ -31,6 +31,10 @@ def main():
         game_id = int(move[0][1][0][1]["game_id"])
 
         logger.info(f"received notification for end validation for game {game_id}")
+
+        if not game_exists(game_id, redis):
+            logger.warn(f"received message for non-existing game (id {game_id})")
+            continue
 
         # get board of current game
         board = ChessBoard(game_id, redis)
