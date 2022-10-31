@@ -32,6 +32,9 @@ app = FastAPI()
 
 async def transmit_game(websocket: WebSocket, game_id: int):
     
+    class GameEndedException(Exception):
+        pass
+
     async def _update_websocket_state(websocket: WebSocket) -> bool:
 
         # websocket state is not automatically updated
@@ -64,6 +67,9 @@ async def transmit_game(websocket: WebSocket, game_id: int):
             if websocket.client_state != WebSocketState.CONNECTED:
                 raise WebSocketDisconnect
 
+            if not game_exists(game_id, redis):
+                raise GameEndedException
+
             if move:
 
                 # parse stream message
@@ -74,6 +80,10 @@ async def transmit_game(websocket: WebSocket, game_id: int):
                 logger.info(f"[{websocket.client.host}:{websocket.client.port}] sending move for game id {game_id}: {move_data}")
                 await websocket.send_json(move_data)
                 await asyncio.sleep(0)
+
+    except GameEndedException:
+        # WS code 1016 (which is unassigned) acts as a game end notification
+        websocket.close(code=1016)
 
     except WebSocketDisconnect:
         pass
