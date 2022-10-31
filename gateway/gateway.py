@@ -14,7 +14,8 @@ import json
 from requests.exceptions import RequestException
 from chess_utils import Move, stream_key_from_id
 from redis import Redis
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Response
+from fastapi import FastAPI, WebSocket, Response
+from starlette.websockets import WebSocketState, WebSocketDisconnect
 from fastapi import Body, status
 from fastapi.logger import logger as fastapi_logger
 
@@ -31,9 +32,21 @@ app = FastAPI()
 
 async def transmit_game(websocket: WebSocket, game_id: int):
     
+    async def _update_websocket_state(websocket: WebSocket) -> bool:
+
+        # websocket state is not automatically updated
+        # therefore we simulate a check below
+        # which triggers state change
+        try:
+            await asyncio.wait_for(
+                websocket.receive_text(), 0.001
+            )
+        except asyncio.TimeoutError:
+            pass
+
     # accept connection
     await websocket.accept()
-    logger.info(f"accepted WS connection from {websocket.client.host}:{websocket.client.port}")
+    await asyncio.sleep(0)
 
     ts = 0
     stream_key = stream_key_from_id(game_id)
@@ -44,15 +57,23 @@ async def transmit_game(websocket: WebSocket, game_id: int):
         while True:
 
             # read move and timestamp
-            logger.info(f"""[{websocket.client.host}:{websocket.client.port}] awaiting move for game id {game_id}""")
-            move = redis.xread({stream_key: ts}, count=1, block=0)
-            ts = move[0][1][0][0]
-            move_data = json.loads(move[0][1][0][1]["data"])
+            move = redis.xread({stream_key: ts}, count=1, block=5000)
 
-            # send move
-            logger.info(f"[{websocket.client.host}:{websocket.client.port}] sending move for game id {game_id}: {move_data}")
-            await websocket.send_json(move_data)
-            await asyncio.sleep(0)
+            # check websocket state
+            await _update_websocket_state(websocket)
+            if websocket.client_state != WebSocketState.CONNECTED:
+                raise WebSocketDisconnect
+
+            if move:
+
+                # parse stream message
+                ts = move[0][1][0][0]
+                move_data = json.loads(move[0][1][0][1]["data"])
+
+                # send move
+                logger.info(f"[{websocket.client.host}:{websocket.client.port}] sending move for game id {game_id}: {move_data}")
+                await websocket.send_json(move_data)
+                await asyncio.sleep(0)
 
     except WebSocketDisconnect:
         pass
@@ -97,6 +118,7 @@ async def new_game(websocket: WebSocket, game_id: int):
     await transmit_game(websocket, game_id)
 
     # once socket has been disconnected - delete game
+    logger.info(f"ending game with id {game_id}")
     redis.delete(stream_key)
 
 @app.post("/game/{game_id}/move", status_code=status.HTTP_201_CREATED)
