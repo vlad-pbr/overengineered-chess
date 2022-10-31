@@ -9,7 +9,7 @@ logged to the game stream.
 import os
 import logging
 from redis import Redis
-from chess_utils import ChessBoard
+from chess_utils import ChessBoard, stream_key_from_id
 
 logger = logging.getLogger(__name__)
 redis = Redis(  host=os.getenv("REDIS_HOST", "localhost"),
@@ -36,9 +36,13 @@ def main():
         board = ChessBoard(game_id, redis)
 
         # TODO actually check if endgame
+        finished = False
 
         # if endgame detected
-        if False:
+        if finished:
+
+            # mark game as finished
+            redis.expire(stream_key_from_id(game_id), 60)
 
             # remove handled move from stream and add move to game
             logger.info("marking completion of event")
