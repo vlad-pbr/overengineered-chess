@@ -12,7 +12,7 @@ import requests
 import logging
 import json
 from requests.exceptions import RequestException
-from chess_utils import Move, stream_key_from_id
+from chess_utils import Move, Coordinate, ChessBoard, stream_key_from_id
 from redis import Redis
 from fastapi import FastAPI, WebSocket, Response
 from starlette.websockets import WebSocketState, WebSocketDisconnect
@@ -156,3 +156,22 @@ def perform_move(game_id: int, move: Move = Body()):
     # 400 from move validator - invalid move
     if response.status_code == 400:
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
+
+@app.post("/game/{game_id}/suggest", status_code=status.HTTP_200_OK)
+def suggest_move(game_id: int, coordinate: Coordinate = Body()):
+
+    # make sure game exists
+    stream_key = stream_key_from_id(game_id)
+    if redis.exists(stream_key) == 0:
+        logger.info(f"game id {game_id} not found")
+        return Response(status_code=status.HTTP_400_BAD_REQUEST)
+
+    # read current game
+    board = ChessBoard(game_id, redis)
+    piece = board.get(coordinate)
+
+    # make sure chess piece exists on the board
+    if not piece:
+        return Response(status_code=status.HTTP_400_BAD_REQUEST)
+
+    return piece.get_valid_moves(board, coordinate)
