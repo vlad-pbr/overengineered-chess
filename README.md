@@ -29,9 +29,10 @@ Gateway is the entity which sits between the user and the rest of the app. It's 
 
 It exposes the following API endpoints:
 
-- `POST /game/{game_id}`: creates a Redis stream for a new game of chess where all moves will be stored
-- `WS   /game/{game_id}`: exposes a websocket through which the gateway will send existing as well as new moves
-- `POST /move`: delegates new move to move validator for further validation and addition to the game stream
+- `WS   /game/{game_id}/create`: creates a Redis stream for a new game of chess where all moves will be stored and transmits performed moves to client via websocket
+- `WS   /game/{game_id}/join`: establishes websocket connection through which game moves will be transmitted to client
+- `POST /game/{game_id}/move`: delegates new move to move validator for further validation and addition to the game stream
+- `POST /game/{game_id}/suggest`: returns a list of valid moves for a given chess piece
 
 It reads the following environment variables:
 
@@ -59,7 +60,7 @@ It reads the following environment variables:
 
 ## Endgame Validator
 
-Endgame validator is a simple `while True` loop which listens on a Redis stream. It receives a message from move validator after a move has been performed and checks if the game has ended. The move is then logged to the game stream, in turn advancing the game.
+Endgame validator is a simple `while True` loop which listens on a Redis stream. It receives a message from move validator after a move has been performed and checks if the game has ended. If game has indeed ended, marks game as finished by setting expiration on the stream key.
 
 It reads the following environment variables:
 
