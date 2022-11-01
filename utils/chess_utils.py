@@ -267,7 +267,7 @@ class ChessBoard:
             return False
 
         # make sure the turn checks out
-        if len({ piece.is_white, self.is_white_turn() }) == 2:
+        if piece.is_white != self.is_white_turn():
             return False
 
         # make sure move itself is valid
