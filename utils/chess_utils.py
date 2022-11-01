@@ -1,5 +1,10 @@
 #!/usr/bin/env python3.8
 
+"""
+Various utility functions and classes related to the
+overengineered game of chess.
+"""
+
 import json
 from typing import Literal
 from pydantic import BaseModel, ValidationError
@@ -164,6 +169,12 @@ class King(ChessPiece):
 
 class ChessBoard:
 
+    """
+    Represents chess pieces on a chess board.
+    A board is initialized by reading game state from redis.
+    Moves can then be performed on that board using move() 
+    """
+
     def __init__(self, game_id: int, redis: Redis) -> None:
         
         # custom game move iterator, because why not
@@ -242,6 +253,11 @@ class ChessBoard:
 
     def move(self, move: Move) -> bool:
 
+        """
+        Performs move on a chessboard.
+        Returns True if successful, otherwise False.
+        """
+
         piece = self.get(move.src_coordinate)
 
         # make sure source is a valid piece
@@ -260,6 +276,13 @@ class ChessBoard:
 
 def game_exists(game_id: int, redis: Redis) -> bool:
     
+    """
+    Checks existence of a game.
+    An existing game is a game which has:
+    - an existing redis stream
+    - no expiration date on the stream key
+    """
+
     stream_key = stream_key_from_id(game_id)
     return redis.exists(stream_key) != 0 and redis.ttl(stream_key) == -1
 

@@ -2,8 +2,9 @@
 
 """
 Endgame validator receives message from move validator after a move
-has been performed and checks if the game has ended. The move is then
-logged to the game stream.
+has been performed and checks if the game has ended. In case
+the game has indeed ended, game is marked as finished by
+setting expiration time on the game key within redis.
 """
 
 import os

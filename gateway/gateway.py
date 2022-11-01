@@ -37,9 +37,11 @@ async def transmit_game(websocket: WebSocket, game_id: int):
 
     async def _update_websocket_state(websocket: WebSocket) -> bool:
 
-        # websocket state is not automatically updated
-        # therefore we simulate a check below
-        # which triggers state change
+        """
+        Websocket state is not automatically updated because reasons.
+        This function simulates a check which triggers websocket state change.
+        """
+
         try:
             await asyncio.wait_for(
                 websocket.receive_text(), 0.001
@@ -82,6 +84,7 @@ async def transmit_game(websocket: WebSocket, game_id: int):
                 await asyncio.sleep(0)
 
     except GameEndedException:
+
         # WS code 1016 (which is unassigned) acts as a game end notification
         websocket.close(code=1016)
 
@@ -179,3 +182,4 @@ def suggest_move(game_id: int, coordinate: Coordinate = Body()):
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
     return piece.get_valid_moves(board, coordinate)
+    
