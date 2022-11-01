@@ -234,8 +234,10 @@ class ChessBoard:
             self._matrix[y[0]][4] = King(y[1])
 
         # add each move to chessboard
+        self.history = []
         for move in Game(game_id, redis):
             self.move(move)
+            self.history.append(move)
 
     def get(self, c: Coordinate):
 
@@ -264,6 +266,10 @@ class ChessBoard:
         if not piece:
             return False
 
+        # make sure the turn checks out
+        if len({ piece.is_white, self.is_white_turn() }) == 2:
+            return False
+
         # make sure move itself is valid
         if move.dest_coordinate not in piece.get_valid_moves(self, move.src_coordinate):
             return False
@@ -271,8 +277,14 @@ class ChessBoard:
         # move piece
         self._matrix[move.src_coordinate.y][move.src_coordinate.x] = None
         self._matrix[move.dest_coordinate.y][move.dest_coordinate.x] = piece
+ 
+        if isinstance(piece, Pawn):
+            piece.first_move = False
 
         return True
+
+    def is_white_turn(self) -> bool:
+        return len(self.history) % 2 == 0
 
 def game_exists(game_id: int, redis: Redis) -> bool:
     
