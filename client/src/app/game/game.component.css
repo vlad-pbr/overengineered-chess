@@ -1,0 +1,19 @@
+#chessboard {
+    display: flex;
+    flex-direction: column;
+}
+
+.chessboard-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.chesspiece {
+    height: 10vh;
+    width: 10vh;
+}
+
+img {
+    height: 100%;
+    width: 100%;
+}
