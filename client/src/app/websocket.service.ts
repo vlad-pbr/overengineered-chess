@@ -18,34 +18,55 @@ export interface Move {
 export class WebsocketService { 
 
   private observable: Observable<Move> | undefined = undefined
+  private ws: WebSocket | undefined = undefined
 
   constructor() { }
 
-  connect(uri: string): boolean {
+  connect(uri: string, success_callback: Function, error_callback: Function): void {
 
-    this.observable = new Observable((observer: Observer<Move>) => {
+    // connect to server
+    this.ws = new WebSocket("ws://localhost:8000" + uri)
 
-      // const ws = new WebSocket("ws://localhost:8000" + uri)
+    // handle error during connection
+    this.ws.onerror = () => {
+      error_callback()
+    }
 
-      // // handle new moves
-      // ws.onmessage = (messageEvent: MessageEvent<any>) => {
-      //   observer.next(messageEvent.data)
-      // }
+    // store reference to ws
+    let ws = this.ws
 
-      // ws.onclose = (closeEvent: CloseEvent) => {
-      //   observer.complete()
-      // }
+    // handle successful connection
+    this.ws.onopen = (ev: Event) => {
 
-      // ======
+      ws.onerror = null
 
-      // temp test data
-      observer.next( JSON.parse('{ "src_coordinate": { "x": 0, "y": 1 }, "dest_coordinate": { "x": 0, "y": 2 } }') as Move )
-      observer.next( JSON.parse('{ "src_coordinate": { "x": 1, "y": 6 }, "dest_coordinate": { "x": 1, "y": 5 } }') as Move )
-      observer.complete()
+      this.observable = new Observable((observer: Observer<Move>) => {
 
-    } )
+        // handle new moves
+        ws.onmessage = (messageEvent: MessageEvent<any>) => {
+          observer.next(JSON.parse(messageEvent.data) as Move)
+        }
 
-    return true
+        // handle socket closure
+        ws.onclose = (closeEvent: CloseEvent) => {
+          console.log(closeEvent)
+          if (closeEvent.code == 1008) {
+            observer.error(closeEvent)
+          } else {
+            observer.complete()
+          }
+        }
+
+        // handle errors
+        ws.onerror = (ev: Event) => {
+          console.log(ev)
+        }
+
+      } )
+
+      success_callback()
+
+    }
   }
 
   connected(): boolean {

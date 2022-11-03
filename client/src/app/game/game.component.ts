@@ -92,6 +92,7 @@ export class GameComponent implements OnInit {
     if (this.check_conditions()) {
 
       let handle_move = (m: Move) => {
+        console.log(m)
         this.chessboard[m.dest_coordinate.y][m.dest_coordinate.x] = this.chessboard[m.src_coordinate.y][m.src_coordinate.x]
         this.chessboard[m.src_coordinate.y][m.src_coordinate.x] = null
       }

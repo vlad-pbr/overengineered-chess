@@ -10,26 +10,43 @@ import { Router } from '@angular/router';
 })
 export class MenuComponent implements OnInit {
 
+  actions = {
+    create: "create",
+    join: "join"
+  }
+
   constructor(private websocketService: WebsocketService, private router: Router) { }
 
-  log_error(message: string): void {
-    (document.getElementById("error-log") as HTMLParagraphElement).textContent = message
+  log(message: string): void {
+    (document.getElementById("log") as HTMLParagraphElement).textContent = message
   }
 
   play(action: string) {
 
     let game_id: number = this.get_id()
 
-    // if socket connection is successful - redirect to game
-    if (this.websocketService.connect(`/game/${game_id}/${action}`)) {
+    this.log("Connecting...")
+
+    // connect to server
+    this.websocketService.connect(`/game/${game_id}/${action}`, () => {
+
+      // change view to actual game
       this.router.navigate([`/game/${game_id}`], { 
         queryParams: { 
-          is_white: action == "create" ? true : false
+          is_white: action == this.actions.create ? true : false
         }
       })
-    } else {
-      this.log_error("An error has occurred.")
-    }
+
+    }, () => {
+
+      // report connection errors
+      if (action == this.actions.create) {
+        this.log(`Game with ID ${game_id} already exists.`)
+      } else {
+        this.log(`Game with ID ${game_id} does not exist.`)
+      }
+
+    })
 
   }
 

@@ -4,7 +4,3 @@
     align-items: center;
     flex-direction: column;
 }
-
-#error-log {
-    color: red;
-}
