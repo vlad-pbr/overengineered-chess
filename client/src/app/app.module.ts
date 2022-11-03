@@ -16,7 +16,7 @@ import { GameComponent } from './game/game.component';
     BrowserModule,
     RouterModule.forRoot([
       {path: 'menu', component: MenuComponent},
-      {path: 'game', component: GameComponent},
+      {path: 'game/:game-id', component: GameComponent},
       {path: '', redirectTo: '/menu', pathMatch: 'full'}
     ])
   ],
