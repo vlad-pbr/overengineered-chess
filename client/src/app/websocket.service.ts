@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
-import { UntypedFormBuilder } from '@angular/forms';
 import { Observable, Observer } from 'rxjs';
 
-interface Coordinate {
+export interface Coordinate {
   x: number
   y: number
 }
@@ -17,8 +16,9 @@ export interface Move {
 })
 export class WebsocketService { 
 
-  private observable: Observable<Move> | undefined = undefined
-  private ws: WebSocket | undefined = undefined
+  private observable?: Observable<Move> = undefined
+  private ws?: WebSocket = undefined
+  private close_code?: number = undefined
 
   constructor() { }
 
@@ -36,7 +36,7 @@ export class WebsocketService {
     let ws = this.ws
 
     // handle successful connection
-    this.ws.onopen = (ev: Event) => {
+    this.ws.onopen = () => {
 
       ws.onerror = null
 
@@ -49,12 +49,10 @@ export class WebsocketService {
 
         // handle socket closure
         ws.onclose = (closeEvent: CloseEvent) => {
+
           console.log(closeEvent)
-          if (closeEvent.code == 1008) {
-            observer.error(closeEvent)
-          } else {
-            observer.complete()
-          }
+          this.close_code = closeEvent.code
+          observer.complete()
         }
 
         // handle errors
@@ -75,5 +73,9 @@ export class WebsocketService {
 
   get_moves(): Observable<Move> | undefined {
     return this.connected() ? this.observable : undefined
+  }
+
+  get_close_code(): number | undefined {
+    return this.close_code
   }
 }

@@ -18,6 +18,7 @@ from fastapi import FastAPI, WebSocket, Response
 from starlette.websockets import WebSocketState, WebSocketDisconnect
 from fastapi import Body, status
 from fastapi.logger import logger as fastapi_logger
+from fastapi.middleware.cors import CORSMiddleware
 
 # logger setup
 logger = logging.getLogger('gunicorn.error')
@@ -29,6 +30,15 @@ redis = Redis(  host=os.getenv("REDIS_HOST", "localhost"),
                 db=0,
                 decode_responses=True)
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:4200",
+    ],
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 async def transmit_game(websocket: WebSocket, game_id: int):
     

@@ -8,7 +8,7 @@
     flex-direction: row;
 }
 
-.chesspiece {
+div[id^=chesspiece-] {
     height: 10vh;
     width: 10vh;
 }
