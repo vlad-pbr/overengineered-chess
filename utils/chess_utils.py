@@ -145,7 +145,38 @@ class Bishop(ChessPiece):
         
         out = []
 
-        # TODO implement
+        for i in [ (1,1), (1,-1), (-1,1), (-1,-1) ]:
+
+            multiplier = 2
+
+            try:
+
+                c = Coordinate.from_literals(coordinate.x + i[0], coordinate.y + i[1])
+                piece = board.get(c)
+
+                # while within borders
+                while piece != False:
+
+                    # if piece is encountered
+                    if piece:
+
+                        # if piece is of opposite color - capture
+                        if piece.is_white != self.is_white:
+                            out.append(c)
+
+                        break
+
+                    # empty spot
+                    else:
+                        out.append(c)
+
+                    # advance
+                    c = Coordinate.from_literals(coordinate.x + (i[0] * multiplier), coordinate.y + (i[1] * multiplier))
+                    multiplier += 1
+                    piece = board.get(c)
+
+            except ValidationError:
+                continue
 
         return out
 
@@ -153,11 +184,8 @@ class Queen(ChessPiece):
     
     def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
         
-        out = []
-
-        # TODO implement
-
-        return out
+        return  Rook(self.is_white).get_valid_moves(board, coordinate) \
+                + Bishop(self.is_white).get_valid_moves(board, coordinate)
 
 class King(ChessPiece):
     
@@ -165,7 +193,24 @@ class King(ChessPiece):
 
         out = []
 
-        # TODO implement
+        # iterate all possible king offsets
+        for i in [ 
+            (-1, -1), (0, -1),
+            (1, -1), (1, 0),
+            (1, 1), (0, 1),
+            (-1, 1), (-1, 0)
+            ]:
+
+            try:
+                c = Coordinate.from_literals(coordinate.x + i[0], coordinate.y + i[1])
+            except ValidationError:
+                continue
+
+            piece = board.get(c)
+
+            # if empty space or opposite pawn - append
+            if piece == None or (piece and piece.is_white != self.is_white):
+                out.append(c)
 
         return out
 
