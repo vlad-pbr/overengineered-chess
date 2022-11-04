@@ -79,6 +79,8 @@ class Rook(ChessPiece):
 
         for i in [ (0,1), (0,-1), (1,0), (-1,0) ]:
 
+            multiplier = 2
+
             try:
 
                 c = Coordinate.from_literals(coordinate.x + i[0], coordinate.y + i[1])
@@ -101,8 +103,8 @@ class Rook(ChessPiece):
                         out.append(c)
 
                     # advance
-                    c.x += i[0]
-                    c.y += i[1]
+                    c = Coordinate.from_literals(coordinate.x + (i[0] * multiplier), coordinate.y + (i[1] * multiplier))
+                    multiplier += 1
                     piece = board.get(c)
 
             except ValidationError:
@@ -237,7 +239,6 @@ class ChessBoard:
         self.history = []
         for move in Game(game_id, redis):
             self.move(move)
-            self.history.append(move)
 
     def get(self, c: Coordinate):
 
@@ -278,6 +279,8 @@ class ChessBoard:
         self._matrix[move.src_coordinate.y][move.src_coordinate.x] = None
         self._matrix[move.dest_coordinate.y][move.dest_coordinate.x] = piece
  
+        self.history.append(move)
+
         if isinstance(piece, Pawn):
             piece.first_move = False
 
