@@ -3,6 +3,16 @@
     flex-direction: column;
 }
 
+#info-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.info-bar-item {
+    width: 10vh;
+}
+
 .chessboard-row {
     display: flex;
     flex-direction: row;

@@ -1,4 +1,8 @@
 <div *ngIf="this.check_conditions(); else elseBlock" id="chessboard">
+    <div id="info-bar">
+        <div class="info-bar-item">Game ID: {{ game_id }}</div>
+        <div class="info-bar-item">Turn: {{ turn_white ? "White" : "Black" }}</div>
+    </div>
     <div class="chessboard-row" *ngFor="let y of [ 0, 1, 2, 3, 4, 5, 6, 7 ]">
         <div [id]="'chesspiece-' + x + '-' + y" *ngFor="let x of [ 0, 1, 2, 3, 4, 5, 6, 7 ]" (click)="handle_select(x, y)" [style]="'background-color: ' + (x % 2 != y % 2 ? colors.black : colors.white) + ';'">
             <img *ngIf="chessboard[y][x]" [src]="'/assets/' + chessboard[y][x]?.image">
