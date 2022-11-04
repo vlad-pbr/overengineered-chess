@@ -43,6 +43,7 @@ export class GameComponent implements OnInit {
   is_white?: boolean = undefined
   focused_chesspiece?: Coordinate = undefined
   focused_spots: Coordinate[] = []
+  locked: boolean = true
 
   chessboard: (ChessPiece[])[] = [
     [
@@ -104,17 +105,16 @@ export class GameComponent implements OnInit {
     if (this.check_conditions()) {
 
       let handle_move = (m: Move) => {
-        console.log(`Performing move: ${m}`)
 
         // perform move on chessboard
         this.chessboard[m.dest_coordinate.y][m.dest_coordinate.x] = this.chessboard[m.src_coordinate.y][m.src_coordinate.x]
         this.chessboard[m.src_coordinate.y][m.src_coordinate.x] = undefined
 
         // switch turns
-        this.turn_white = !this.turn_white
-        
-        // TODO handle focus
-        this.unfocus()
+        this.switch_turns()
+
+        // unlock board
+        this.set_lock(false)
       }
 
       // subscribe to game moves and handle each move
@@ -122,6 +122,9 @@ export class GameComponent implements OnInit {
         next(m) { handle_move(m) },
         complete() { console.log(websocketService.get_close_code()) },
       })
+
+      // unlock board
+      this.set_lock(false)
 
     }
 
@@ -134,6 +137,11 @@ export class GameComponent implements OnInit {
   }
 
   handle_select(x: number, y: number): void {
+
+    // drop selections when board is locked
+    if (this.locked) {
+      return
+    }
 
     // build coordinate out of X and Y
     let c: Coordinate = { x: x, y: y }
@@ -155,7 +163,6 @@ export class GameComponent implements OnInit {
       
       // a click on one of the suggestions performs a move
       else if (this.includes(c, this.focused_spots)) {
-        console.log("performing move")
         this.perform_move(this.focused_chesspiece, c)
       }
 
@@ -175,6 +182,8 @@ export class GameComponent implements OnInit {
 
   focus(c: Coordinate): void {
 
+    this.set_lock(true)
+
     // unfocus current piece
     if (this.focused_chesspiece) {
       this.unfocus()
@@ -184,18 +193,15 @@ export class GameComponent implements OnInit {
     this.focused_chesspiece = c
     this.set_border(c, this.colors.focused_piece, true)
 
-    // store local references for callback to use
-    let focused_spots = this.focused_spots
-    let set_border = this.set_border
-    let focused_spot = this.colors.focused_spot
-
     // get all move suggestions and focus on them
     this.http.post<Coordinate[]>(`http://localhost:8000/game/${this.game_id}/suggest`, c).subscribe({
-      next(suggestions) {
+      next: (suggestions) => {
         suggestions.forEach((suggestion) => {
-          focused_spots.push(suggestion)
-          set_border(suggestion, focused_spot, true)
+          this.focused_spots.push(suggestion)
+          this.set_border(suggestion, this.colors.focused_spot, true)
         })
+
+        this.set_lock(false)
       }
     })
 
@@ -232,7 +238,22 @@ export class GameComponent implements OnInit {
   }
 
   perform_move(src: Coordinate, dest: Coordinate): void {
-    // TODO
+    
+    // unfocus piece
+    this.set_lock(true)
+    this.unfocus()
+
+    // perform move
+    let move: Move = { src_coordinate: src, dest_coordinate: dest }
+    this.http.post(`http://localhost:8000/game/${this.game_id}/move`, move).subscribe({})
+  }
+
+  switch_turns() {
+    this.turn_white = !this.turn_white
+  }
+
+  set_lock(locked: boolean) {
+    this.locked = locked
   }
 
   ngOnInit(): void {
