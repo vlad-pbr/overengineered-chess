@@ -1,7 +1,8 @@
 import { Component, ComponentFactoryResolver, OnInit } from '@angular/core';
-import { WebsocketService } from '../websocket.service'
 import { Router } from '@angular/router';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
+import { WebsocketService } from '../websocket.service'
 
 @Component({
   selector: 'app-menu',
@@ -10,41 +11,43 @@ import { Router } from '@angular/router';
 })
 export class MenuComponent implements OnInit {
 
-  actions = {
-    create: "create",
-    join: "join"
-  }
-
-  constructor(private websocketService: WebsocketService, private router: Router) { }
+  constructor(private websocketService: WebsocketService, private router: Router, private http: HttpClient) { }
 
   log(message: string): void {
     (document.getElementById("log") as HTMLParagraphElement).textContent = message
   }
 
-  play(action: string) {
+  create(game_id: number) {
 
-    let game_id: number = this.get_id()
+    // try creating game with given ID
+    this.http.post(`http://localhost:8000/game/${game_id}/create`, null).subscribe({
+      complete: () => {
+        this.join(game_id)
+      },
+      error: (e) => {
+        this.log((e as HttpErrorResponse).error)
+      }
+    })
+
+  }
+
+  join(game_id: number) {
 
     this.log("Connecting...")
 
     // connect to server
-    this.websocketService.connect(`/game/${game_id}/${action}`, () => {
+    this.websocketService.connect(`/game/${game_id}/join`, () => {
 
       // change view to actual game
       this.router.navigate([`/game/${game_id}`], { 
         queryParams: { 
-          is_white: action == this.actions.create ? true : false
+          is_white: this.white_chosen()
         }
       })
 
     }, () => {
 
-      // report connection errors
-      if (action == this.actions.create) {
-        this.log(`Game with ID ${game_id} already exists.`)
-      } else {
-        this.log(`Game with ID ${game_id} does not exist.`)
-      }
+      this.log(`Game with ID ${game_id} does not exist.`)
 
     })
 
@@ -52,6 +55,10 @@ export class MenuComponent implements OnInit {
 
   get_id(): number {
     return parseInt((document.getElementById("game-id") as HTMLInputElement).value)
+  }
+
+  white_chosen(): boolean {
+    return (document.querySelector("input[name=color]:checked") as HTMLInputElement).value === "white" 
   }
 
   handleIDchange(): void {

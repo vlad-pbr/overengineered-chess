@@ -101,6 +101,28 @@ async def transmit_game(websocket: WebSocket, game_id: int):
     except WebSocketDisconnect:
         pass
 
+@app.post("/game/{game_id}/create", status_code=status.HTTP_201_CREATED)
+def create_game(game_id: int):
+    
+    """
+    Creates a new redis stream for given game id.
+    """
+
+    stream_key = stream_key_from_id(game_id)
+
+    # make sure no duplicate game
+    if game_exists(game_id, redis):
+        return Response(status_code=status.HTTP_400_BAD_REQUEST,
+                        content=f"Game with ID {game_id} already exists.")
+    
+    # create new stream
+    #
+    # NOTE: redis has seemingly no way of creating an empty stream
+    # so we just create a stream with temp data and delete it
+    ts = redis.xadd(stream_key, {"a":"b"})
+    redis.xdel(stream_key, ts)
+    logger.info(f"created game with id {game_id}")
+
 @app.websocket("/game/{game_id}/join")
 async def join_game(websocket: WebSocket, game_id: int):
     
@@ -113,36 +135,6 @@ async def join_game(websocket: WebSocket, game_id: int):
     # transmit moves
     await transmit_game(websocket, game_id)
 
-@app.websocket("/game/{game_id}/create")
-async def new_game(websocket: WebSocket, game_id: int):
-
-    """
-    Creates a new redis stream for given game id.
-    Then transmits game moves via websocket.
-    Finally deletes the redis stream on socket disconnect.
-    """
-
-    stream_key = stream_key_from_id(game_id)
-
-    # make sure no duplicate game
-    if game_exists(game_id, redis):
-        return Response(status_code=status.WS_1008_POLICY_VIOLATION)
-    
-    # create new stream
-    #
-    # NOTE: redis has seemingly no way of creating an empty stream
-    # so we just create a stream with temp data and delete it
-    ts = redis.xadd(stream_key, {"a":"b"})
-    redis.xdel(stream_key, ts)
-    logger.info(f"created game with id {game_id}")
-
-    # transmit moves
-    await transmit_game(websocket, game_id)
-
-    # once socket has been disconnected - delete game
-    logger.info(f"ending game with id {game_id}")
-    redis.delete(stream_key)
-
 @app.post("/game/{game_id}/move", status_code=status.HTTP_201_CREATED)
 def perform_move(game_id: int, move: Move = Body()):
 
@@ -150,7 +142,8 @@ def perform_move(game_id: int, move: Move = Body()):
 
     # make sure game exists
     if not game_exists(game_id, redis):
-        return Response(status_code=status.HTTP_400_BAD_REQUEST)
+        return Response(status_code=status.HTTP_400_BAD_REQUEST,
+                        content=f"Game with ID {game_id} does not exist.")
 
     try:
 
@@ -170,18 +163,21 @@ def perform_move(game_id: int, move: Move = Body()):
 
     except RequestException as e:
         logger.warn(f"an error occurred while validating move for game id {game_id}: {e}")
-        return Response(status_code=status.HTTP_502_BAD_GATEWAY)
+        return Response(status_code=status.HTTP_502_BAD_GATEWAY,
+                        content=f"{e}")
 
     # 400 from move validator - invalid move
     if response.status_code == 400:
-        return Response(status_code=status.HTTP_400_BAD_REQUEST)
+        return Response(status_code=status.HTTP_400_BAD_REQUEST,
+                        content=f"Invalid move.")
 
 @app.post("/game/{game_id}/suggest", status_code=status.HTTP_200_OK)
 def suggest_move(game_id: int, coordinate: Coordinate = Body()):
 
     # make sure game exists
     if not game_exists(game_id, redis):
-        return Response(status_code=status.HTTP_400_BAD_REQUEST)
+        return Response(status_code=status.HTTP_400_BAD_REQUEST,
+                        content=f"Game with ID {game_id} does not exist.")
 
     # read current game
     board = ChessBoard(game_id, redis)
@@ -189,7 +185,8 @@ def suggest_move(game_id: int, coordinate: Coordinate = Body()):
 
     # make sure chess piece exists on the board
     if not piece:
-        return Response(status_code=status.HTTP_400_BAD_REQUEST)
+        return Response(status_code=status.HTTP_400_BAD_REQUEST,
+                        content=f"Piece does not exist.")
 
     return piece.get_valid_moves(board, coordinate)
     
