@@ -1,6 +1,16 @@
 import { Injectable } from '@angular/core';
 import { Observable, Observer } from 'rxjs';
 
+// const EventTypes: string {
+//   MOVE = "a"
+// }
+
+export enum EventType {
+  MOVE = "move",
+  CHECK = "check",
+  CHECKMATE = "checkmate"
+}
+
 export interface Coordinate {
   x: number
   y: number
@@ -11,12 +21,17 @@ export interface Move {
   dest_coordinate: Coordinate
 }
 
+export interface GameEvent {
+  event: EventType
+  move: Move
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class WebsocketService { 
 
-  private observable?: Observable<Move> = undefined
+  private observable?: Observable<GameEvent> = undefined
   private ws?: WebSocket = undefined
   private close_code?: number = undefined
 
@@ -40,11 +55,11 @@ export class WebsocketService {
 
       ws.onerror = null
 
-      this.observable = new Observable((observer: Observer<Move>) => {
+      this.observable = new Observable((observer: Observer<GameEvent>) => {
 
         // handle new moves
         ws.onmessage = (messageEvent: MessageEvent<any>) => {
-          observer.next(JSON.parse(messageEvent.data) as Move)
+          observer.next(JSON.parse(messageEvent.data) as GameEvent)
         }
 
         // handle socket closure
@@ -71,7 +86,7 @@ export class WebsocketService {
     return this.observable ? true : false
   }
 
-  get_moves(): Observable<Move> | undefined {
+  get_events(): Observable<GameEvent> | undefined {
     return this.connected() ? this.observable : undefined
   }
 

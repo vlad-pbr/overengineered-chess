@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 
-import { WebsocketService, Move, Coordinate } from '../websocket.service'
+import { WebsocketService, Move, GameEvent, Coordinate, EventType } from '../websocket.service'
 
 const CHESS_PIECES = {
   PAWN_WHITE: "pawn_white.png",
@@ -104,22 +104,36 @@ export class GameComponent implements OnInit {
     // make sure game conditions check out
     if (this.check_conditions()) {
 
-      let handle_move = (m: Move) => {
+      let handle_event = (e: GameEvent) => {
 
-        // perform move on chessboard
-        this.chessboard[m.dest_coordinate.y][m.dest_coordinate.x] = this.chessboard[m.src_coordinate.y][m.src_coordinate.x]
-        this.chessboard[m.src_coordinate.y][m.src_coordinate.x] = undefined
+        // handle move event
+        if (e.event === EventType.MOVE) {
 
-        // switch turns
-        this.switch_turns()
+          // perform move on chessboard
+          this.chessboard[e.move.dest_coordinate.y][e.move.dest_coordinate.x] = this.chessboard[e.move.src_coordinate.y][e.move.src_coordinate.x]
+          this.chessboard[e.move.src_coordinate.y][e.move.src_coordinate.x] = undefined
 
-        // unlock board
-        this.set_lock(false)
+          // switch turns
+          this.switch_turns()
+
+          // unlock board
+          this.set_lock(false)
+        }
+
+        // handle check
+        else if (e.event === "check") {
+          console.log("check")
+        }
+
+        // handle checkmate
+        else if (e.event === "checkmate") {
+          console.log("checkmate")
+        }
       }
 
       // subscribe to game moves and handle each move
-      websocketService.get_moves()?.subscribe({
-        next(m) { handle_move(m) },
+      websocketService.get_events()?.subscribe({
+        next(e) { handle_event(e) },
         complete() { console.log(websocketService.get_close_code()) },
       })
 

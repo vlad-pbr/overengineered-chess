@@ -6,12 +6,31 @@ overengineered game of chess.
 """
 
 import json
+from enum import Enum
 from typing import Literal
 from pydantic import BaseModel, ValidationError
 from redis import Redis
 
 # list of all valid axis values
 VALID_COORDINATE = tuple([*range(0,8)])
+
+# class GameEvent:
+
+#     class EventType(Enum):
+#         MOVE = "move"
+#         CHECK = "check"
+#         CHECKMATE = "checkmate"
+
+#     def __init__(self, event: EventType, move: 'Move' = None) -> None:
+#         self.event = event.value
+        
+#         if self.event == self.EventType.MOVE:
+#             self.move = move
+
+class EventTypes(Enum):
+    MOVE = "move"
+    CHECK = "check"
+    CHECKMATE = "checkmate"
 
 class Coordinate(BaseModel):
 
@@ -25,6 +44,16 @@ class Coordinate(BaseModel):
 class Move(BaseModel):
     src_coordinate: Coordinate
     dest_coordinate: Coordinate
+
+class MoveGameEvent(BaseModel):
+    event: str = EventTypes.MOVE.value
+    move: Move
+
+class CheckGameEvent(BaseModel):
+    type: str = EventTypes.CHECK.value
+
+class CheckmateGameEvent(BaseModel):
+    type: str = EventTypes.CHECKMATE.value
 
 class ChessPiece():
 
@@ -237,17 +266,23 @@ class ChessBoard:
 
             def __next__(self) -> Move:
                 
-                # read next move from redis
-                move = redis.xread({self.stream_key: self.ts}, count=1)
+                while True:
 
-                if move:
+                    # read next move from redis
+                    move = redis.xread({self.stream_key: self.ts}, count=1)
 
-                    # store timestamp and return parsed move
-                    self.ts = move[0][1][0][0]
+                    if move:
 
-                    return Move(**json.loads(move[0][1][0][1]["data"]))
+                        # store timestamp and return parsed move
+                        self.ts = move[0][1][0][0]
+                        move_data = json.loads(move[0][1][0][1]["data"])
 
-                raise StopIteration
+                        if move_data["event"] == EventTypes.MOVE.value:
+                            return Move(**move_data["move"])
+
+                    else:
+
+                        raise StopIteration
 
         # init empty chess board matrix
         self._matrix = [ [None for _ in range(0,8)] for _ in range(0,8) ]

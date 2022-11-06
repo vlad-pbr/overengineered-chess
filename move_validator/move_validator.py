@@ -11,7 +11,7 @@ import os
 import logging
 import json
 from redis import Redis
-from chess_utils import Move, ChessBoard, stream_key_from_id, game_exists
+from chess_utils import Move, ChessBoard, EventTypes, stream_key_from_id, game_exists
 from fastapi import FastAPI, Response, Body, status
 from fastapi.logger import logger as fastapi_logger
 
@@ -46,7 +46,7 @@ def validate_move(game_id: int, move: Move = Body()):
 
     # append move to game
     logger.info(f"appending valid move to game id {game_id}: {move}")
-    redis.xadd(stream_key_from_id(game_id), { "data": json.dumps(move.dict()) } )
+    redis.xadd(stream_key_from_id(game_id), { "data": json.dumps({ "event": EventTypes.MOVE.value, "move": move.dict() }) } )
 
     # notify endgame validator
     logger.info(f"sending game id {game_id} move notification to endgame validator")
