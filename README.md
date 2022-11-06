@@ -21,7 +21,7 @@ The following chapters explain how each moving part functions.
 
 ## Client
 
-TODO
+Angular client for the game. It lets user choose a color and create or join games using a game ID. It only communicates with the gateway.
 
 ## Gateway
 
@@ -29,8 +29,8 @@ Gateway is the entity which sits between the user and the rest of the app. It's 
 
 It exposes the following API endpoints:
 
-- `WS   /game/{game_id}/create`: creates a Redis stream for a new game of chess where all moves will be stored and transmits performed moves to client via websocket
-- `WS   /game/{game_id}/join`: establishes websocket connection through which game moves will be transmitted to client
+- `POST /game/{game_id}/create`: creates a Redis stream for a new game of chess where all events are stored
+- `WS   /game/{game_id}/join`: establishes websocket connection through which game events will be transmitted to client
 - `POST /game/{game_id}/move`: delegates new move to move validator for further validation and addition to the game stream
 - `POST /game/{game_id}/suggest`: returns a list of valid moves for a given chess piece
 
@@ -60,7 +60,7 @@ It reads the following environment variables:
 
 ## Endgame Validator
 
-Endgame validator is a simple `while True` loop which listens on a Redis stream. It receives a message from move validator after a move has been performed and checks if the game has ended. If game has indeed ended, marks game as finished by setting expiration on the stream key.
+Endgame validator is a simple `while True` loop which listens on a Redis stream. It receives a message from move validator after a move has been performed and checks for existence of a check / checkmate. If a check is detected, it is logged to the game stream. If a checkmate is detected, it is logged and expiration of 60 seconds is set on the game stream.
 
 It reads the following environment variables:
 
