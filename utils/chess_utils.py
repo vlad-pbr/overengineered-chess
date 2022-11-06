@@ -429,6 +429,6 @@ def stream_key_from_id(id: int) -> str:
 
 
 def write_event_to_game(game_id: int, redis: Redis, event: GameEvent):
-    """Writes data to game stream"""
+    """Writes data to game stream."""
 
     redis.xadd(stream_key_from_id(game_id), {"data": json.dumps(event.dict())})

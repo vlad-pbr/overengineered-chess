@@ -66,10 +66,10 @@ export class GameComponent implements OnInit {
       { image: CHESS_PIECES.PAWN_BLACK, is_white: false },
       { image: CHESS_PIECES.PAWN_BLACK, is_white: false }
     ],
-    [ undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined ],
-    [ undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined ],
-    [ undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined ],
-    [ undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined ],
+    [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined],
+    [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined],
+    [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined],
+    [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined],
     [
       { image: CHESS_PIECES.PAWN_WHITE, is_white: true },
       { image: CHESS_PIECES.PAWN_WHITE, is_white: true },
@@ -92,7 +92,7 @@ export class GameComponent implements OnInit {
     ]
   ]
 
-  constructor(private websocketService: WebsocketService, private route: ActivatedRoute, private http: HttpClient) { 
+  constructor(private websocketService: WebsocketService, private route: ActivatedRoute, private http: HttpClient) {
 
     // resolve params
     this.game_id = parseInt(this.route.snapshot.paramMap.get("game-id") as string)
@@ -148,9 +148,9 @@ export class GameComponent implements OnInit {
   }
 
   check_conditions(): boolean {
-    return  !isNaN(this.game_id)
-            && this.is_white != undefined
-            && this.websocketService.connected()
+    return !isNaN(this.game_id)
+      && this.is_white != undefined
+      && this.websocketService.connected()
   }
 
   handle_select(x: number, y: number): void {
@@ -176,8 +176,8 @@ export class GameComponent implements OnInit {
       if (this.equals(c, this.focused_chesspiece)) {
 
         this.unfocus()
-      } 
-      
+      }
+
       // a click on one of the suggestions performs a move
       else if (this.includes(c, this.focused_spots)) {
         this.perform_move(this.focused_chesspiece, c)
@@ -255,7 +255,7 @@ export class GameComponent implements OnInit {
   }
 
   perform_move(src: Coordinate, dest: Coordinate): void {
-    
+
     // unfocus piece
     this.set_lock(true)
     this.unfocus()

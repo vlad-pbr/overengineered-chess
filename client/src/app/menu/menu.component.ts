@@ -39,8 +39,8 @@ export class MenuComponent implements OnInit {
     this.websocketService.connect(`/game/${game_id}/join`, () => {
 
       // change view to actual game
-      this.router.navigate([`/game/${game_id}`], { 
-        queryParams: { 
+      this.router.navigate([`/game/${game_id}`], {
+        queryParams: {
           is_white: this.white_chosen()
         }
       })
@@ -58,7 +58,7 @@ export class MenuComponent implements OnInit {
   }
 
   white_chosen(): boolean {
-    return (document.querySelector("input[name=color]:checked") as HTMLInputElement).value === "white" 
+    return (document.querySelector("input[name=color]:checked") as HTMLInputElement).value === "white"
   }
 
   handleIDchange(): void {
@@ -71,6 +71,6 @@ export class MenuComponent implements OnInit {
 
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void { }
 
 }

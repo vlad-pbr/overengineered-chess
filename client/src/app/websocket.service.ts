@@ -1,10 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, Observer } from 'rxjs';
 
-// const EventTypes: string {
-//   MOVE = "a"
-// }
-
 export enum EventType {
   MOVE = "move",
   CHECK = "check",
@@ -29,7 +25,7 @@ export interface GameEvent {
 @Injectable({
   providedIn: 'root'
 })
-export class WebsocketService { 
+export class WebsocketService {
 
   private observable?: Observable<GameEvent> = undefined
   private ws?: WebSocket = undefined
@@ -71,7 +67,7 @@ export class WebsocketService {
           console.log(ev)
         }
 
-      } )
+      })
 
       success_callback()
 
