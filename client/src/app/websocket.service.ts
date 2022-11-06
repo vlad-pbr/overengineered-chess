@@ -33,7 +33,6 @@ export class WebsocketService {
 
   private observable?: Observable<GameEvent> = undefined
   private ws?: WebSocket = undefined
-  private close_code?: number = undefined
 
   constructor() { }
 
@@ -64,9 +63,6 @@ export class WebsocketService {
 
         // handle socket closure
         ws.onclose = (closeEvent: CloseEvent) => {
-
-          console.log(closeEvent)
-          this.close_code = closeEvent.code
           observer.complete()
         }
 
@@ -88,9 +84,5 @@ export class WebsocketService {
 
   get_events(): Observable<GameEvent> | undefined {
     return this.connected() ? this.observable : undefined
-  }
-
-  get_close_code(): number | undefined {
-    return this.close_code
   }
 }

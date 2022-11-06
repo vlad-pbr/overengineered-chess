@@ -121,20 +121,23 @@ export class GameComponent implements OnInit {
         }
 
         // handle check
-        else if (e.event === "check") {
-          console.log("check")
+        else if (e.event === EventType.CHECK) {
+          this.log("Check!")
         }
 
         // handle checkmate
-        else if (e.event === "checkmate") {
-          console.log("checkmate")
+        else if (e.event === EventType.CHECKMATE) {
+          this.set_lock(true)
+          this.log(`Checkmate! ${this.turn_white ? 'White' : 'Black'} wins!`)
         }
       }
 
       // subscribe to game moves and handle each move
       websocketService.get_events()?.subscribe({
-        next(e) { handle_event(e) },
-        complete() { console.log(websocketService.get_close_code()) },
+        next: (e) => { handle_event(e) },
+        complete: () => {
+          (document.getElementById("connection-log") as HTMLParagraphElement).textContent = "(Game disconnected)"
+        }
       })
 
       // unlock board
@@ -268,6 +271,10 @@ export class GameComponent implements OnInit {
 
   set_lock(locked: boolean) {
     this.locked = locked
+  }
+
+  log(message: string) {
+    (document.getElementById("log") as HTMLParagraphElement).textContent = message
   }
 
   ngOnInit(): void {
