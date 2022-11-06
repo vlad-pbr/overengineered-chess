@@ -106,6 +106,8 @@ export class GameComponent implements OnInit {
 
       let handle_event = (e: GameEvent) => {
 
+        this.log("")
+
         // handle move event
         if (e.event === EventType.MOVE) {
 
