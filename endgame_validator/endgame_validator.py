@@ -10,7 +10,7 @@ setting expiration time on the game key within redis.
 import os
 import logging
 from redis import Redis
-from chess_utils import ChessBoard, stream_key_from_id, game_exists, write_event_to_game
+from chess_utils import ChessBoard, CheckmateGameEvent, stream_key_from_id, game_exists, write_event_to_game
 
 logging.basicConfig(level=logging.DEBUG)
 redis = Redis(host=os.getenv("REDIS_HOST", "localhost"),
@@ -47,11 +47,12 @@ def main():
             # if check detected
             if event:
 
+                # if checkmate - mark game as finished
+                if isinstance(event, CheckmateGameEvent):
+                    redis.expire(stream_key_from_id(game_id), 60)
+
                 # write event to game
                 write_event_to_game(game_id, redis, event)
-
-                # mark game as finished
-                redis.expire(stream_key_from_id(game_id), 60)
 
                 # remove handled move from stream and add move to game
                 logging.info(f"game id {game_id}: new event: {event}")
