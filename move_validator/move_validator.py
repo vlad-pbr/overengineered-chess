@@ -9,9 +9,8 @@ via redis stream.
 
 import os
 import logging
-import json
 from redis import Redis
-from chess_utils import Move, ChessBoard, EventTypes, stream_key_from_id, game_exists
+from chess_utils import Move, ChessBoard, MoveGameEvent, game_exists, write_event_to_game
 from fastapi import FastAPI, Response, Body, status
 from fastapi.logger import logger as fastapi_logger
 
@@ -20,15 +19,15 @@ logger = logging.getLogger('gunicorn.error')
 fastapi_logger.handlers = logger.handlers
 fastapi_logger.setLevel(logging.DEBUG)
 
-redis = Redis(  host=os.getenv("REDIS_HOST", "localhost"),
-                port=int(os.getenv("REDIS_PORT", "6379")),
-                db=0,
-                decode_responses=True)
+redis = Redis(host=os.getenv("REDIS_HOST", "localhost"),
+              port=int(os.getenv("REDIS_PORT", "6379")),
+              db=0,
+              decode_responses=True)
 app = FastAPI()
+
 
 @app.post("/validate", status_code=status.HTTP_201_CREATED)
 def validate_move(game_id: int, move: Move = Body()):
-
     """Makes sure provided move is valid. Notifies endgame validator."""
 
     logger.info(f"validating move for game id {game_id}: {move}")
@@ -46,8 +45,10 @@ def validate_move(game_id: int, move: Move = Body()):
 
     # append move to game
     logger.info(f"appending valid move to game id {game_id}: {move}")
-    redis.xadd(stream_key_from_id(game_id), { "data": json.dumps({ "event": EventTypes.MOVE.value, "move": move.dict() }) } )
+    write_event_to_game(game_id, redis, MoveGameEvent(move=move))
 
     # notify endgame validator
-    logger.info(f"sending game id {game_id} move notification to endgame validator")
-    redis.xadd(os.getenv("ENDGAME_STREAM_NAME", "endgame"), { "game_id": game_id } )
+    logger.info(
+        f"sending game id {game_id} move notification to endgame validator")
+    redis.xadd(os.getenv("ENDGAME_STREAM_NAME",
+               "endgame"), {"game_id": game_id})

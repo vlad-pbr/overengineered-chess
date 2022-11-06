@@ -12,60 +12,59 @@ from pydantic import BaseModel, ValidationError
 from redis import Redis
 
 # list of all valid axis values
-VALID_COORDINATE = tuple([*range(0,8)])
+VALID_COORDINATE = tuple([*range(0, 8)])
 
-# class GameEvent:
-
-#     class EventType(Enum):
-#         MOVE = "move"
-#         CHECK = "check"
-#         CHECKMATE = "checkmate"
-
-#     def __init__(self, event: EventType, move: 'Move' = None) -> None:
-#         self.event = event.value
-        
-#         if self.event == self.EventType.MOVE:
-#             self.move = move
 
 class EventTypes(Enum):
     MOVE = "move"
     CHECK = "check"
     CHECKMATE = "checkmate"
 
+
 class Coordinate(BaseModel):
 
-    x: Literal[VALID_COORDINATE] # pylance does not like this for some reason
+    x: Literal[VALID_COORDINATE]  # pylance does not like this for some reason
     y: Literal[VALID_COORDINATE]
 
     @staticmethod
     def from_literals(x: Literal[VALID_COORDINATE], y: Literal[VALID_COORDINATE]) -> 'Coordinate':
-        return Coordinate(**{ "x": x, "y": y })
+        return Coordinate(**{"x": x, "y": y})
+
 
 class Move(BaseModel):
     src_coordinate: Coordinate
     dest_coordinate: Coordinate
 
-class MoveGameEvent(BaseModel):
+
+class GameEvent(BaseModel):
+    pass
+
+
+class MoveGameEvent(GameEvent):
     event: str = EventTypes.MOVE.value
     move: Move
 
-class CheckGameEvent(BaseModel):
-    type: str = EventTypes.CHECK.value
 
-class CheckmateGameEvent(BaseModel):
-    type: str = EventTypes.CHECKMATE.value
+class CheckGameEvent(GameEvent):
+    event: str = EventTypes.CHECK.value
+
+
+class CheckmateGameEvent(GameEvent):
+    event: str = EventTypes.CHECKMATE.value
+
 
 class ChessPiece():
 
     def __init__(self, is_white: bool) -> None:
         self.is_white = is_white
 
+
 class Pawn(ChessPiece):
-    
+
     first_move: bool = True
 
     def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
-        
+
         out = []
 
         # check forward moves
@@ -73,7 +72,8 @@ class Pawn(ChessPiece):
 
             # derive xy of current iteration
             try:
-                c = Coordinate.from_literals(coordinate.x, coordinate.y + (-i if self.is_white else i))
+                c = Coordinate.from_literals(
+                    coordinate.x, coordinate.y + (-i if self.is_white else i))
             except ValidationError:
                 break
 
@@ -88,7 +88,8 @@ class Pawn(ChessPiece):
 
             # derive xy of current iteration
             try:
-                c = Coordinate.from_literals(coordinate.x + i, coordinate.y + (-1 if self.is_white else 1))
+                c = Coordinate.from_literals(
+                    coordinate.x + i, coordinate.y + (-1 if self.is_white else 1))
             except ValidationError:
                 continue
 
@@ -100,19 +101,21 @@ class Pawn(ChessPiece):
 
         return out
 
+
 class Rook(ChessPiece):
-    
+
     def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
-        
+
         out = []
 
-        for i in [ (0,1), (0,-1), (1,0), (-1,0) ]:
+        for i in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
 
             multiplier = 2
 
             try:
 
-                c = Coordinate.from_literals(coordinate.x + i[0], coordinate.y + i[1])
+                c = Coordinate.from_literals(
+                    coordinate.x + i[0], coordinate.y + i[1])
                 piece = board.get(c)
 
                 # while within borders
@@ -132,7 +135,8 @@ class Rook(ChessPiece):
                         out.append(c)
 
                     # advance
-                    c = Coordinate.from_literals(coordinate.x + (i[0] * multiplier), coordinate.y + (i[1] * multiplier))
+                    c = Coordinate.from_literals(
+                        coordinate.x + (i[0] * multiplier), coordinate.y + (i[1] * multiplier))
                     multiplier += 1
                     piece = board.get(c)
 
@@ -141,22 +145,24 @@ class Rook(ChessPiece):
 
         return out
 
+
 class Knight(ChessPiece):
-    
+
     def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
 
         out = []
 
         # iterate all possible knight offsets
-        for i in [ 
+        for i in [
             (-1, -2), (1, -2),
             (2, -1), (2, 1),
             (-1, 2), (1, 2),
             (-2, -1), (-2, 1)
-            ]:
+        ]:
 
             try:
-                c = Coordinate.from_literals(coordinate.x + i[0], coordinate.y + i[1])
+                c = Coordinate.from_literals(
+                    coordinate.x + i[0], coordinate.y + i[1])
             except ValidationError:
                 continue
 
@@ -168,19 +174,21 @@ class Knight(ChessPiece):
 
         return out
 
+
 class Bishop(ChessPiece):
 
     def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
-        
+
         out = []
 
-        for i in [ (1,1), (1,-1), (-1,1), (-1,-1) ]:
+        for i in [(1, 1), (1, -1), (-1, 1), (-1, -1)]:
 
             multiplier = 2
 
             try:
 
-                c = Coordinate.from_literals(coordinate.x + i[0], coordinate.y + i[1])
+                c = Coordinate.from_literals(
+                    coordinate.x + i[0], coordinate.y + i[1])
                 piece = board.get(c)
 
                 # while within borders
@@ -200,7 +208,8 @@ class Bishop(ChessPiece):
                         out.append(c)
 
                     # advance
-                    c = Coordinate.from_literals(coordinate.x + (i[0] * multiplier), coordinate.y + (i[1] * multiplier))
+                    c = Coordinate.from_literals(
+                        coordinate.x + (i[0] * multiplier), coordinate.y + (i[1] * multiplier))
                     multiplier += 1
                     piece = board.get(c)
 
@@ -209,29 +218,32 @@ class Bishop(ChessPiece):
 
         return out
 
+
 class Queen(ChessPiece):
-    
+
     def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
-        
-        return  Rook(self.is_white).get_valid_moves(board, coordinate) \
-                + Bishop(self.is_white).get_valid_moves(board, coordinate)
+
+        return Rook(self.is_white).get_valid_moves(board, coordinate) \
+            + Bishop(self.is_white).get_valid_moves(board, coordinate)
+
 
 class King(ChessPiece):
-    
+
     def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
 
         out = []
 
         # iterate all possible king offsets
-        for i in [ 
+        for i in [
             (-1, -1), (0, -1),
             (1, -1), (1, 0),
             (1, 1), (0, 1),
             (-1, 1), (-1, 0)
-            ]:
+        ]:
 
             try:
-                c = Coordinate.from_literals(coordinate.x + i[0], coordinate.y + i[1])
+                c = Coordinate.from_literals(
+                    coordinate.x + i[0], coordinate.y + i[1])
             except ValidationError:
                 continue
 
@@ -242,6 +254,7 @@ class King(ChessPiece):
                 out.append(c)
 
         return out
+
 
 class ChessBoard:
 
@@ -252,7 +265,7 @@ class ChessBoard:
     """
 
     def __init__(self, game_id: int, redis: Redis) -> None:
-        
+
         # custom game move iterator, because why not
         class Game:
 
@@ -265,7 +278,7 @@ class ChessBoard:
                 return self
 
             def __next__(self) -> Move:
-                
+
                 while True:
 
                     # read next move from redis
@@ -285,34 +298,34 @@ class ChessBoard:
                         raise StopIteration
 
         # init empty chess board matrix
-        self._matrix = [ [None for _ in range(0,8)] for _ in range(0,8) ]
+        self._matrix = [[None for _ in range(0, 8)] for _ in range(0, 8)]
 
         # spawn pawns
-        for y in [ (1, False), (6, True) ]:
-            for x in range(0,8):
+        for y in [(1, False), (6, True)]:
+            for x in range(0, 8):
                 self._matrix[y[0]][x] = Pawn(y[1])
 
         # spawn rooks
-        for y in [ (0, False), (7, True) ]:
-            for x in [ 0, 7 ]:
+        for y in [(0, False), (7, True)]:
+            for x in [0, 7]:
                 self._matrix[y[0]][x] = Rook(y[1])
 
         # spawn knights
-        for y in [ (0, False), (7, True) ]:
-            for x in [ 1, 6 ]:
+        for y in [(0, False), (7, True)]:
+            for x in [1, 6]:
                 self._matrix[y[0]][x] = Knight(y[1])
 
         # spawn bishops
-        for y in [ (0, False), (7, True) ]:
-            for x in [ 2, 5 ]:
+        for y in [(0, False), (7, True)]:
+            for x in [2, 5]:
                 self._matrix[y[0]][x] = Bishop(y[1])
 
         # spawn queens
-        for y in [ (0, False), (7, True) ]:
+        for y in [(0, False), (7, True)]:
             self._matrix[y[0]][3] = Queen(y[1])
 
         # spawn kings
-        for y in [ (0, False), (7, True) ]:
+        for y in [(0, False), (7, True)]:
             self._matrix[y[0]][4] = King(y[1])
 
         # add each move to chessboard
@@ -321,7 +334,6 @@ class ChessBoard:
             self.move(move)
 
     def get(self, c: Coordinate):
-
         """
         Gets an element from the chess board.
         Returns ChessPiece if there is a chess price.
@@ -335,7 +347,6 @@ class ChessBoard:
             return False
 
     def move(self, move: Move) -> bool:
-
         """
         Performs move on a chessboard.
         Returns True if successful, otherwise False.
@@ -358,7 +369,7 @@ class ChessBoard:
         # move piece
         self._matrix[move.src_coordinate.y][move.src_coordinate.x] = None
         self._matrix[move.dest_coordinate.y][move.dest_coordinate.x] = piece
- 
+
         self.history.append(move)
 
         if isinstance(piece, Pawn):
@@ -366,23 +377,58 @@ class ChessBoard:
 
         return True
 
+    def find_checks(self):
+        """
+        Searches for existing check or checkmate.
+        Returns appropriate object if found.
+        Returns None otherwise.
+        """
+
+        for y in range(0, 8):
+            for x in range(0, 8):
+
+                c = Coordinate.from_literals(x, y)
+                piece = self.get(c)
+
+                # if piece is found
+                if piece:
+
+                    # get it's valid moves
+                    spots = piece.get_valid_moves(self, c)
+
+                    for spot in spots:
+
+                        # check if valid move is for an opposite king
+                        target_piece = self.get(spot)
+
+                        if target_piece \
+                                and isinstance(target_piece, King) \
+                                and piece.is_white != target_piece.is_white:
+
+                            if self.is_white_turn() == target_piece.is_white:
+                                return CheckGameEvent()
+                            else:
+                                return CheckmateGameEvent()
+
+        return None
+
     def is_white_turn(self) -> bool:
         return len(self.history) % 2 == 0
 
-def game_exists(game_id: int, redis: Redis) -> bool:
-    
-    """
-    Checks existence of a game.
-    An existing game is a game which has:
-    - an existing redis stream
-    - no expiration date on the stream key
-    """
 
-    stream_key = stream_key_from_id(game_id)
-    return redis.exists(stream_key) != 0 and redis.ttl(stream_key) == -1
+def game_exists(game_id: int, redis: Redis) -> bool:
+    """Checks existence of a related redis stream."""
+
+    return redis.exists(stream_key_from_id(game_id)) != 0
+
 
 def stream_key_from_id(id: int) -> str:
-
     """Outputs stream key by game id so all stream names follow the same format."""
 
     return f"game-{id}"
+
+
+def write_event_to_game(game_id: int, redis: Redis, event: GameEvent):
+    """Writes data to game stream"""
+
+    redis.xadd(stream_key_from_id(game_id), {"data": json.dumps(event.dict())})
