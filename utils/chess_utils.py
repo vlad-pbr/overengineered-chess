@@ -30,10 +30,16 @@ class Coordinate(BaseModel):
     def from_literals(x: Literal[VALID_COORDINATE], y: Literal[VALID_COORDINATE]) -> 'Coordinate':
         return Coordinate(**{"x": x, "y": y})
 
+    def __eq__(self, other: 'Coordinate'):
+        return self.x == other.x and self.y == other.y
+
 
 class Move(BaseModel):
     src_coordinate: Coordinate
     dest_coordinate: Coordinate
+
+    def __eq__(self, other: 'Move'):
+        return self.src_coordinate == other.src_coordinate and self.dest_coordinate == other.dest_coordinate
 
 
 class GameEvent(BaseModel):
@@ -43,6 +49,9 @@ class GameEvent(BaseModel):
 class MoveGameEvent(GameEvent):
     event: str = EventTypes.MOVE.value
     move: Move
+
+    def __eq__(self, other: 'MoveGameEvent'):
+        return self.event == other.event and self.move == other.move
 
 
 class CheckGameEvent(GameEvent):
@@ -433,6 +442,7 @@ def write_event_to_game(game_id: int, redis: Redis, event: GameEvent):
 
     redis.xadd(stream_key_from_id(game_id), {"data": json.dumps(event.dict())})
 
+
 def init_game(game_id: int, redis: Redis):
     """Inits empty redis stream for a game of chess."""
 
@@ -443,3 +453,14 @@ def init_game(game_id: int, redis: Redis):
     stream_key = stream_key_from_id(game_id)
     ts = redis.xadd(stream_key, {"a": "b"})
     redis.xdel(stream_key, ts)
+
+
+def expire_game(game_id: int, redis: Redis, timeout: int):
+    """Sets expiration on a game stream. If timeout is 0, game is deleted."""
+
+    stream_key = stream_key_from_id(game_id)
+
+    if timeout == 0:
+        redis.delete(stream_key)
+    else:
+        redis.expire(stream_key, timeout)
