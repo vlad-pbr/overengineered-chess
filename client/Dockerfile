@@ -1,4 +1,5 @@
 FROM docker.io/library/node:18.12.0-slim as build
+EXPOSE 80
 WORKDIR /app
 COPY . .
 RUN npm install

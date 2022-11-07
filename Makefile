@@ -34,5 +34,5 @@ all: clean
 		$(MAKE) run NAME=$$IMAGE; \
 	done
 
-	#$(MAKE) build NAME=client
-	#$(MAKE) run NAME=client
+	$(MAKE) build NAME=client
+	$(MAKE) run NAME=client
