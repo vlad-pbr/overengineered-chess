@@ -23,10 +23,13 @@ clean:
 
 all: clean
 
+	for IMAGE in endgame_validator move_validator gateway; do \
+		$(MAKE) test NAME=$$IMAGE; \
+	done
+
 	$(MAKE) run NAME=redis:7.0.5
 
 	for IMAGE in endgame_validator move_validator gateway; do \
-		$(MAKE) test NAME=$$IMAGE; \
 		$(MAKE) build NAME=$$IMAGE; \
 		$(MAKE) run NAME=$$IMAGE; \
 	done
