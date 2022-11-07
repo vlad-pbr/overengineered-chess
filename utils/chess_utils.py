@@ -432,3 +432,14 @@ def write_event_to_game(game_id: int, redis: Redis, event: GameEvent):
     """Writes data to game stream."""
 
     redis.xadd(stream_key_from_id(game_id), {"data": json.dumps(event.dict())})
+
+def init_game(game_id: int, redis: Redis):
+    """Inits empty redis stream for a game of chess."""
+
+    # create new stream
+    #
+    # NOTE: redis has seemingly no way of creating an empty stream
+    # so we just create a stream with temp data and delete it
+    stream_key = stream_key_from_id(game_id)
+    ts = redis.xadd(stream_key, {"a": "b"})
+    redis.xdel(stream_key, ts)

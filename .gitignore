@@ -1,3 +1,4 @@
 *.pyc
 __pycache__
 core_gunicorn*
+.pytest_cache

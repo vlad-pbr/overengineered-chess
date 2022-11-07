@@ -12,7 +12,7 @@ import requests
 import logging
 import json
 from requests.exceptions import RequestException
-from chess_utils import Move, Coordinate, ChessBoard, stream_key_from_id, game_exists
+from chess_utils import Move, Coordinate, ChessBoard, stream_key_from_id, game_exists, init_game
 from redis import Redis
 from fastapi import FastAPI, WebSocket, Response
 from starlette.websockets import WebSocketState, WebSocketDisconnect
@@ -113,12 +113,7 @@ def create_game(game_id: int):
                         content=f"Game with ID {game_id} already exists.")
 
     # create new stream
-    #
-    # NOTE: redis has seemingly no way of creating an empty stream
-    # so we just create a stream with temp data and delete it
-    ts = redis.xadd(stream_key, {"a": "b"})
-    redis.xdel(stream_key, ts)
-    logger.info(f"created game with id {game_id}")
+    init_game(game_id, redis)
 
 
 @app.websocket("/game/{game_id}/join")
