@@ -1,28 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Observable, Observer } from 'rxjs';
 
-import { ENV } from '../shared/env'
-
-export enum EventType {
-  MOVE = "move",
-  CHECK = "check",
-  CHECKMATE = "checkmate"
-}
-
-export interface Coordinate {
-  x: number
-  y: number
-}
-
-export interface Move {
-  src_coordinate: Coordinate
-  dest_coordinate: Coordinate
-}
-
-export interface GameEvent {
-  event: EventType
-  move: Move
-}
+import { GameEvent } from '../models/gameevent.model'
+import { ENV } from '../env'
 
 @Injectable()
 export class WebsocketService {

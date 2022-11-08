@@ -2,7 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 
-import { WebsocketService, Move, GameEvent, Coordinate, EventType } from '../shared/websocket.service'
+import { GameEvent, EventType } from '../shared/models/gameevent.model'
+import { Coordinate, is_coordinate_in, is_coordinate_equal } from '../shared/models/coordinate.model'
+import { Move } from '../shared/models/move.model'
+import { WebsocketService } from '../shared/services/websocket.service'
 import { ENV } from '../shared/env'
 
 const CHESS_PIECES = {
@@ -176,13 +179,13 @@ export class GameComponent implements OnInit {
 
 
       // additional click unfocuses the piece
-      if (this.equals(c, this.focused_chesspiece)) {
+      if (is_coordinate_equal(c, this.focused_chesspiece)) {
 
         this.unfocus()
       }
 
       // a click on one of the suggestions performs a move
-      else if (this.includes(c, this.focused_spots)) {
+      else if (is_coordinate_in(c, this.focused_spots)) {
         this.perform_move(this.focused_chesspiece, c)
       }
 
@@ -281,22 +284,6 @@ export class GameComponent implements OnInit {
   }
 
   ngOnInit(): void {
-  }
-
-  equals(c1: Coordinate, c2: Coordinate): boolean {
-    return c1.x == c2.x && c1.y == c2.y
-  }
-
-  includes(c: Coordinate, l: Coordinate[]): boolean {
-
-    for (let lc of l) {
-      if (this.equals(c, lc)) {
-        return true
-      }
-    }
-
-    return false
-
   }
 
 }

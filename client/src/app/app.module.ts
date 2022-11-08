@@ -6,7 +6,7 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { AppComponent } from './app.component';
 import { MenuComponent } from './menu/menu.component';
 import { GameComponent } from './game/game.component';
-import { WebsocketService } from './shared/websocket.service';
+import { WebsocketService } from './shared/services/websocket.service';
 import { Environment, set_environment } from './shared/env';
 import { map, Observable } from 'rxjs';
 
