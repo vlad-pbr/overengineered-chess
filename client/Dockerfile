@@ -7,9 +7,5 @@ COPY . .
 RUN npm run build --prod
 
 FROM docker.io/library/nginx:1.22.1
-WORKDIR /app
 COPY build/default.conf /etc/nginx/conf.d/default.conf
-COPY build/docker-entrypoint.sh /app/docker-entrypoint.sh
 COPY --from=build /app/dist/chess /usr/share/nginx/html
-ENTRYPOINT [ "/app/docker-entrypoint.sh" ]
-CMD [ "nginx", "-g", "daemon off;" ]
