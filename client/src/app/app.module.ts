@@ -6,6 +6,7 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { AppComponent } from './app.component';
 import { MenuComponent } from './menu/menu.component';
 import { GameComponent } from './game/game.component';
+import { WebsocketService } from './websocket/websocket.service';
 import { Environment, set_environment } from './env';
 import { map, Observable } from 'rxjs';
 
@@ -31,12 +32,14 @@ function init_app(http: HttpClient): () => Observable<Environment> {
       { path: '', redirectTo: '/menu', pathMatch: 'full' }
     ])
   ],
-  providers: [{
-    provide: APP_INITIALIZER,
-    useFactory: init_app,
-    deps: [HttpClient],
-    multi: true
-  }],
+  providers: [
+    WebsocketService,
+    {
+      provide: APP_INITIALIZER,
+      useFactory: init_app,
+      deps: [HttpClient],
+      multi: true
+    }],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

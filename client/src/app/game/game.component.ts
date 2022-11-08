@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 
-import { WebsocketService, Move, GameEvent, Coordinate, EventType } from '../websocket.service'
+import { WebsocketService, Move, GameEvent, Coordinate, EventType } from '../websocket/websocket.service'
 import { ENV } from '../env'
 
 const CHESS_PIECES = {

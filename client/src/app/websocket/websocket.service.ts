@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, Observer } from 'rxjs';
 
-import { ENV } from './env'
+import { ENV } from '../env'
 
 export enum EventType {
   MOVE = "move",
@@ -24,9 +24,7 @@ export interface GameEvent {
   move: Move
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable()
 export class WebsocketService {
 
   private observable?: Observable<GameEvent> = undefined
