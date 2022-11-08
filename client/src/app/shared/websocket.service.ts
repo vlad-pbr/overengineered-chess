@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, Observer } from 'rxjs';
 
-import { ENV } from '../env'
+import { ENV } from '../shared/env'
 
 export enum EventType {
   MOVE = "move",

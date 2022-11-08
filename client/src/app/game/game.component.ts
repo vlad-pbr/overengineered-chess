@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 
-import { WebsocketService, Move, GameEvent, Coordinate, EventType } from '../websocket/websocket.service'
-import { ENV } from '../env'
+import { WebsocketService, Move, GameEvent, Coordinate, EventType } from '../shared/websocket.service'
+import { ENV } from '../shared/env'
 
 const CHESS_PIECES = {
   PAWN_WHITE: "pawn_white.png",

@@ -2,8 +2,8 @@ import { Component, ComponentFactoryResolver, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
-import { WebsocketService } from '../websocket/websocket.service'
-import { ENV } from '../env'
+import { WebsocketService } from '../shared/websocket.service'
+import { ENV } from '../shared/env'
 
 @Component({
   selector: 'app-menu',
