@@ -1,11 +1,20 @@
-import { NgModule } from '@angular/core';
+import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
 
 import { AppComponent } from './app.component';
 import { MenuComponent } from './menu/menu.component';
 import { GameComponent } from './game/game.component';
+import { Environment, set_environment } from './env';
+import { map, Observable } from 'rxjs';
+
+function init_app(http: HttpClient): () => Observable<Environment> {
+  return () => http.get<Environment>("./env.json").pipe(map(e => {
+    set_environment(e)
+    return e;
+  }))
+}
 
 @NgModule({
   declarations: [
@@ -17,12 +26,17 @@ import { GameComponent } from './game/game.component';
     BrowserModule,
     HttpClientModule,
     RouterModule.forRoot([
-      {path: 'menu', component: MenuComponent},
-      {path: 'game/:game-id', component: GameComponent},
-      {path: '', redirectTo: '/menu', pathMatch: 'full'}
+      { path: 'menu', component: MenuComponent },
+      { path: 'game/:game-id', component: GameComponent },
+      { path: '', redirectTo: '/menu', pathMatch: 'full' }
     ])
   ],
-  providers: [],
+  providers: [{
+    provide: APP_INITIALIZER,
+    useFactory: init_app,
+    deps: [HttpClient],
+    multi: true
+  }],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

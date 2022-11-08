@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
 import { WebsocketService } from '../websocket.service'
+import { ENV } from '../env'
 
 @Component({
   selector: 'app-menu',
@@ -20,7 +21,7 @@ export class MenuComponent implements OnInit {
   create(game_id: number) {
 
     // try creating game with given ID
-    this.http.post(`http://localhost:8000/game/${game_id}/create`, null).subscribe({
+    this.http.post(`http://${ENV.GATEWAY_ENDPOINT}/game/${game_id}/create`, null).subscribe({
       complete: () => {
         this.join(game_id)
       },

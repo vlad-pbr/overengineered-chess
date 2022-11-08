@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Observable, Observer } from 'rxjs';
 
+import { ENV } from './env'
+
 export enum EventType {
   MOVE = "move",
   CHECK = "check",
@@ -35,7 +37,7 @@ export class WebsocketService {
   connect(uri: string, success_callback: Function, error_callback: Function): void {
 
     // connect to server
-    this.ws = new WebSocket("ws://localhost:8000" + uri)
+    this.ws = new WebSocket(`ws://${ENV.GATEWAY_ENDPOINT}${uri}`)
 
     // handle error during connection
     this.ws.onerror = () => {

@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 
 import { WebsocketService, Move, GameEvent, Coordinate, EventType } from '../websocket.service'
+import { ENV } from '../env'
 
 const CHESS_PIECES = {
   PAWN_WHITE: "pawn_white.png",
@@ -213,7 +214,7 @@ export class GameComponent implements OnInit {
     this.set_border(c, this.colors.focused_piece, true)
 
     // get all move suggestions and focus on them
-    this.http.post<Coordinate[]>(`http://localhost:8000/game/${this.game_id}/suggest`, c).subscribe({
+    this.http.post<Coordinate[]>(`http://${ENV.GATEWAY_ENDPOINT}/game/${this.game_id}/suggest`, c).subscribe({
       next: (suggestions) => {
         suggestions.forEach((suggestion) => {
           this.focused_spots.push(suggestion)
@@ -229,7 +230,7 @@ export class GameComponent implements OnInit {
   unfocus(): void {
 
     if (this.focused_chesspiece) {
-
+      
       // remove reference to focused chesspiece
       this.set_border(this.focused_chesspiece, this.colors.focused_piece, false)
       this.focused_chesspiece = undefined
@@ -264,7 +265,7 @@ export class GameComponent implements OnInit {
 
     // perform move
     let move: Move = { src_coordinate: src, dest_coordinate: dest }
-    this.http.post(`http://localhost:8000/game/${this.game_id}/move`, move).subscribe({})
+    this.http.post(`http://${ENV.GATEWAY_ENDPOINT}/game/${this.game_id}/move`, move).subscribe({})
   }
 
   switch_turns() {
