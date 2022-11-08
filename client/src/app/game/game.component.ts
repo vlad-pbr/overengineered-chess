@@ -214,7 +214,7 @@ export class GameComponent implements OnInit {
     this.set_border(c, this.colors.focused_piece, true)
 
     // get all move suggestions and focus on them
-    this.http.post<Coordinate[]>(`http://${ENV.GATEWAY_ENDPOINT}/game/${this.game_id}/suggest`, c).subscribe({
+    this.http.post<Coordinate[]>(`${ENV.GATEWAY_HTTP_ENDPOINT}/game/${this.game_id}/suggest`, c).subscribe({
       next: (suggestions) => {
         suggestions.forEach((suggestion) => {
           this.focused_spots.push(suggestion)
@@ -265,7 +265,7 @@ export class GameComponent implements OnInit {
 
     // perform move
     let move: Move = { src_coordinate: src, dest_coordinate: dest }
-    this.http.post(`http://${ENV.GATEWAY_ENDPOINT}/game/${this.game_id}/move`, move).subscribe({})
+    this.http.post(`${ENV.GATEWAY_HTTP_ENDPOINT}/game/${this.game_id}/move`, move).subscribe({})
   }
 
   switch_turns() {

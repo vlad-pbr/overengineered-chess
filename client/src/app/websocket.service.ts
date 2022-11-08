@@ -37,7 +37,7 @@ export class WebsocketService {
   connect(uri: string, success_callback: Function, error_callback: Function): void {
 
     // connect to server
-    this.ws = new WebSocket(`ws://${ENV.GATEWAY_ENDPOINT}${uri}`)
+    this.ws = new WebSocket(`${ENV.GATEWAY_WS_ENDPOINT}${uri}`)
 
     // handle error during connection
     this.ws.onerror = () => {
