@@ -5,28 +5,9 @@ import { HttpClient } from '@angular/common/http';
 import { GameEvent, EventType } from '../shared/models/gameevent.model'
 import { Coordinate, is_coordinate_in, is_coordinate_equal } from '../shared/models/coordinate.model'
 import { Move } from '../shared/models/move.model'
+import { DEFAULT_CHESSBOARD } from '../shared/models/chesspiece.model'
 import { WebsocketService } from '../shared/services/websocket.service'
 import { ENV } from '../shared/env'
-
-const CHESS_PIECES = {
-  PAWN_WHITE: "pawn_white.png",
-  PAWN_BLACK: "pawn_black.png",
-  ROOK_WHITE: "rook_white.png",
-  ROOK_BLACK: "rook_black.png",
-  KNIGHT_WHITE: "knight_white.png",
-  KNIGHT_BLACK: "knight_black.png",
-  BISHOP_WHITE: "bishop_white.png",
-  BISHOP_BLACK: "bishop_black.png",
-  QUEEN_WHITE: "queen_white.png",
-  QUEEN_BLACK: "queen_black.png",
-  KING_WHITE: "king_white.png",
-  KING_BLACK: "king_black.png"
-}
-
-type ChessPiece = {
-  image: string,
-  is_white: boolean
-} | undefined
 
 @Component({
   selector: 'app-game',
@@ -35,66 +16,19 @@ type ChessPiece = {
 })
 export class GameComponent implements OnInit {
 
-  colors = {
-    black: "#466d1d",
-    white: "#98bf64",
-    focused_piece: "blue",
-    focused_spot: "aqua"
-  }
-
   game_id: number
   turn_white: boolean = true
   is_white?: boolean = undefined
   focused_chesspiece?: Coordinate = undefined
   focused_spots: Coordinate[] = []
   locked: boolean = true
-
-  chessboard: (ChessPiece[])[] = [
-    [
-      { image: CHESS_PIECES.ROOK_BLACK, is_white: false },
-      { image: CHESS_PIECES.KNIGHT_BLACK, is_white: false },
-      { image: CHESS_PIECES.BISHOP_BLACK, is_white: false },
-      { image: CHESS_PIECES.QUEEN_BLACK, is_white: false },
-      { image: CHESS_PIECES.KING_BLACK, is_white: false },
-      { image: CHESS_PIECES.BISHOP_BLACK, is_white: false },
-      { image: CHESS_PIECES.KNIGHT_BLACK, is_white: false },
-      { image: CHESS_PIECES.ROOK_BLACK, is_white: false }
-    ],
-    [
-      { image: CHESS_PIECES.PAWN_BLACK, is_white: false },
-      { image: CHESS_PIECES.PAWN_BLACK, is_white: false },
-      { image: CHESS_PIECES.PAWN_BLACK, is_white: false },
-      { image: CHESS_PIECES.PAWN_BLACK, is_white: false },
-      { image: CHESS_PIECES.PAWN_BLACK, is_white: false },
-      { image: CHESS_PIECES.PAWN_BLACK, is_white: false },
-      { image: CHESS_PIECES.PAWN_BLACK, is_white: false },
-      { image: CHESS_PIECES.PAWN_BLACK, is_white: false }
-    ],
-    [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined],
-    [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined],
-    [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined],
-    [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined],
-    [
-      { image: CHESS_PIECES.PAWN_WHITE, is_white: true },
-      { image: CHESS_PIECES.PAWN_WHITE, is_white: true },
-      { image: CHESS_PIECES.PAWN_WHITE, is_white: true },
-      { image: CHESS_PIECES.PAWN_WHITE, is_white: true },
-      { image: CHESS_PIECES.PAWN_WHITE, is_white: true },
-      { image: CHESS_PIECES.PAWN_WHITE, is_white: true },
-      { image: CHESS_PIECES.PAWN_WHITE, is_white: true },
-      { image: CHESS_PIECES.PAWN_WHITE, is_white: true }
-    ],
-    [
-      { image: CHESS_PIECES.ROOK_WHITE, is_white: true },
-      { image: CHESS_PIECES.KNIGHT_WHITE, is_white: true },
-      { image: CHESS_PIECES.BISHOP_WHITE, is_white: true },
-      { image: CHESS_PIECES.QUEEN_WHITE, is_white: true },
-      { image: CHESS_PIECES.KING_WHITE, is_white: true },
-      { image: CHESS_PIECES.BISHOP_WHITE, is_white: true },
-      { image: CHESS_PIECES.KNIGHT_WHITE, is_white: true },
-      { image: CHESS_PIECES.ROOK_WHITE, is_white: true }
-    ]
-  ]
+  chessboard = DEFAULT_CHESSBOARD
+  colors = {
+    black: "#466d1d",
+    white: "#98bf64",
+    focused_piece: "blue",
+    focused_spot: "aqua"
+  }
 
   constructor(private websocketService: WebsocketService, private route: ActivatedRoute, private http: HttpClient) {
 
