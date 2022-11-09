@@ -28,7 +28,7 @@ function init_app(http: HttpClient): () => Observable<Environment> {
     HttpClientModule,
     RouterModule.forRoot([
       { path: 'menu', component: MenuComponent },
-      { path: 'game/:game-id', component: GameComponent },
+      { path: 'game', component: GameComponent },
       { path: '', redirectTo: '/menu', pathMatch: 'full' }
     ])
   ],

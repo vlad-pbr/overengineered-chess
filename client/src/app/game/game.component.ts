@@ -30,8 +30,8 @@ export class GameComponent implements OnInit {
 
   constructor(private websocketService: WebsocketService, private route: ActivatedRoute, private http: HttpClient) {
 
-    this.game_id = parseInt(this.route.snapshot.paramMap.get("game-id") as string)
-    let is_white: string = this.route.snapshot.queryParams["is_white"]
+    this.game_id = parseInt(this.route.snapshot.queryParams["game_id"])
+    const is_white: string = this.route.snapshot.queryParams["is_white"]
     if (is_white != undefined) {
       this.is_white = is_white === 'true'
     }
@@ -40,36 +40,51 @@ export class GameComponent implements OnInit {
 
   ngOnInit(): void {
 
-    if (this.check_conditions()) {
+    if (this.check_params()) {
 
-      const event_resolver: { [event: string]: (e: GameEvent) => void } = {
-        [EventType.MOVE]: (e) => {
+      const setup = () => {
 
-          // perform move on chessboard
-          this.chessboard[e.move.dest_coordinate.y][e.move.dest_coordinate.x] = this.chessboard[e.move.src_coordinate.y][e.move.src_coordinate.x]
-          this.chessboard[e.move.src_coordinate.y][e.move.src_coordinate.x] = undefined
-          
-          this.turn_white = !this.turn_white
-          this.board_locked = false
-        },
-        [EventType.CHECK]: (e) => {
-          this.log = "Check!"
-        },
-        [EventType.CHECKMATE]: (e) => {
-          this.board_locked = true
-          this.log = `Checkmate! ${this.turn_white ? 'White' : 'Black'} wins!`
+        const event_resolver: { [event: string]: (e: GameEvent) => void } = {
+          [EventType.MOVE]: (e) => {
+
+            // perform move on chessboard
+            this.chessboard[e.move.dest_coordinate.y][e.move.dest_coordinate.x] = this.chessboard[e.move.src_coordinate.y][e.move.src_coordinate.x]
+            this.chessboard[e.move.src_coordinate.y][e.move.src_coordinate.x] = undefined
+
+            this.turn_white = !this.turn_white
+            this.board_locked = false
+          },
+          [EventType.CHECK]: (e) => {
+            this.log = "Check!"
+          },
+          [EventType.CHECKMATE]: (e) => {
+            this.board_locked = true
+            this.log = `Checkmate! ${this.turn_white ? 'White' : 'Black'} wins!`
+          }
         }
+
+        // subscribe to game moves and handle each move
+        this.websocketService.get_events()?.subscribe({
+          next: (e) => { this.log = ""; event_resolver[e.event](e) },
+          complete: () => {
+            this.connection_log = "(Game disconnected)"
+          }
+        })
+
       }
 
-      // subscribe to game moves and handle each move
-      this.websocketService.get_events()?.subscribe({
-        next: (e) => { this.log = ""; event_resolver[e.event](e) },
-        complete: () => {
-          this.connection_log = "(Game disconnected)"
-        }
-      })
+      if (!this.websocketService.connected()) {
+        this.websocketService.connect(this.game_id, setup, () => {
+          // TODO connection failed
+        })
+      } else {
+        setup()
+      }
     }
+  }
 
+  is_connected(): boolean {
+    return this.websocketService.connected()
   }
 
   get_chessboard_spot_class(x: number, y: number): string {
@@ -78,10 +93,9 @@ export class GameComponent implements OnInit {
       + `${is_coordinate_in({ x, y }, this.focused_spots) ? "focused-spot" : ""}`
   }
 
-  check_conditions(): boolean {
+  check_params(): boolean {
     return !isNaN(this.game_id)
       && this.is_white != undefined
-      && this.websocketService.connected()
   }
 
   handle_select(x: number, y: number): void {

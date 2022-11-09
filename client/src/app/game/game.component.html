@@ -1,4 +1,4 @@
-<div *ngIf="this.check_conditions(); else elseBlock" id="chessboard">
+<div *ngIf="is_connected(); else disconnected" id="chessboard">
     <div id="info-bar">
         <div class="info-bar-item">Game ID: {{ game_id }}</div>
         <div class="info-bar-item">Your color: {{ is_white ? "White" : "Black" }}</div>
@@ -17,6 +17,11 @@
     <p class="log" id="connection-log">{{ connection_log }}</p>
 </div>
 
-<ng-template #elseBlock>
-    Invalid request. Go back to <a href="/menu">menu</a>.
+<ng-template #disconnected>
+    <div *ngIf="check_params(); else invalidParams">
+        Connecting...
+    </div>
+    <ng-template #invalidParams>
+        Invalid request. Go back to <a href="/menu">menu</a>.
+    </ng-template>
 </ng-template>

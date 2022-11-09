@@ -29,7 +29,7 @@ export class MenuComponent implements OnInit {
         this.join(game_id)
       },
       error: (e) => {
-        this.log =(e as HttpErrorResponse).error
+        this.log = (e as HttpErrorResponse).error
       }
     })
 
@@ -40,25 +40,24 @@ export class MenuComponent implements OnInit {
     this.log = "Connecting..."
 
     // connect to server
-    this.websocketService.connect(`/game/${game_id}/join`, () => {
+    this.websocketService.connect(game_id, () => {
 
       // change view to actual game
-      this.router.navigate([`/game/${game_id}`], {
+      this.router.navigate(["/game"], {
         queryParams: {
+          game_id: this.game_id,
           is_white: this.is_white
         }
       })
 
     }, () => {
-
       this.log = `Game with ID ${game_id} does not exist.`
-
     })
 
   }
 
   handle_id_change(e: Event): void {
-    this.game_id = parseInt((e as InputEvent).data!)
+    this.game_id = parseInt((e.target as HTMLInputElement).value)
   }
 
   handle_color_change(e: Event): void {

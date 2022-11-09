@@ -7,55 +7,47 @@ import { ENV } from '../env'
 @Injectable()
 export class WebsocketService {
 
-  private observable?: Observable<GameEvent> = undefined
-  private ws?: WebSocket = undefined
+  private observable?: Observable<GameEvent>
+  private ws?: WebSocket
 
   constructor() { }
 
-  connect(uri: string, success_callback: Function, error_callback: Function): void {
+  connect(game_id: number, success_callback: Function, error_callback: Function): void {
 
     // connect to server
-    this.ws = new WebSocket(`${ENV.GATEWAY_WS_ENDPOINT}${uri}`)
+    this.ws = new WebSocket(`${ENV.GATEWAY_WS_ENDPOINT}/game/${game_id}/join`)
 
     // handle error during connection
     this.ws.onerror = () => {
       error_callback()
     }
 
-    // store reference to ws
-    let ws = this.ws
-
     // handle successful connection
     this.ws.onopen = () => {
 
-      ws.onerror = null
+      this.ws!.onerror = null
 
       this.observable = new Observable((observer: Observer<GameEvent>) => {
 
-        // handle new moves
-        ws.onmessage = (messageEvent: MessageEvent<any>) => {
+        this.ws!.onmessage = (messageEvent: MessageEvent<any>) => {
           observer.next(JSON.parse(messageEvent.data) as GameEvent)
         }
-
-        // handle socket closure
-        ws.onclose = (closeEvent: CloseEvent) => {
+        this.ws!.onclose = (closeEvent: CloseEvent) => {
           observer.complete()
+          this.ws = undefined
         }
-
-        // handle errors
-        ws.onerror = (ev: Event) => {
+        this.ws!.onerror = (ev: Event) => {
           console.log(ev)
         }
 
       })
 
       success_callback()
-
     }
   }
 
   connected(): boolean {
-    return this.observable ? true : false
+    return !!this.ws
   }
 
   get_events(): Observable<GameEvent> | undefined {
