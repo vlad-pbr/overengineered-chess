@@ -8,9 +8,9 @@
         <div
         *ngFor="let x of range(0, chessboard[0].length)"
         [id]="'chesspiece-' + x + '-' + y"
-        [style]="'background-color: ' + (x % 2 != y % 2 ? colors.black : colors.white) + ';'"
+        [class]="get_chessboard_spot_class(x, y)"
         (click)="handle_select(x, y)">
-            <img *ngIf="chessboard[y][x]" [src]="chessboard[y][x]?.image">
+            <img *ngIf="chessboard[y][x]" [src]="chessboard[y][x]!.image">
         </div>
     </div>
     <b><p class="log" id="log"></p></b>

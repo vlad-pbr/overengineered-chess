@@ -22,15 +22,9 @@ export class GameComponent implements OnInit {
   is_white?: boolean = undefined
   focused_chesspiece?: Coordinate = undefined
   focused_spots: Coordinate[] = []
-  locked: boolean = true
+  board_locked: boolean = true
   chessboard = DEFAULT_CHESSBOARD
   range = range
-  colors = {
-    black: "#466d1d",
-    white: "#98bf64",
-    focused_piece: "blue",
-    focused_spot: "aqua"
-  }
 
   constructor(private websocketService: WebsocketService, private route: ActivatedRoute, private http: HttpClient) {
 
@@ -59,7 +53,7 @@ export class GameComponent implements OnInit {
           this.switch_turns()
 
           // unlock board
-          this.set_lock(false)
+          this.board_locked = false
         }
 
         // handle check
@@ -69,7 +63,7 @@ export class GameComponent implements OnInit {
 
         // handle checkmate
         else if (e.event === EventType.CHECKMATE) {
-          this.set_lock(true)
+          this.board_locked = true
           this.log(`Checkmate! ${this.turn_white ? 'White' : 'Black'} wins!`)
         }
       }
@@ -83,10 +77,16 @@ export class GameComponent implements OnInit {
       })
 
       // unlock board
-      this.set_lock(false)
+      this.board_locked = false
 
     }
 
+  }
+
+  get_chessboard_spot_class(x: number, y: number): string {
+    return `chessboard-${x % 2 != y % 2 ? "black" : "white"} `
+      + `${this.focused_chesspiece && is_coordinate_equal({ x, y }, this.focused_chesspiece!) ? "focused-piece" : ""} `
+      + `${is_coordinate_in({ x, y }, this.focused_spots) ? "focused-spot" : ""}`
   }
 
   check_conditions(): boolean {
@@ -97,42 +97,30 @@ export class GameComponent implements OnInit {
 
   handle_select(x: number, y: number): void {
 
-    // drop selections when board is locked
-    if (this.locked) {
-      return
-    }
-
-    // build coordinate out of X and Y
-    let c: Coordinate = { x: x, y: y }
-
-    // make sure it's user's turn
-    if (this.is_white != this.turn_white) {
+    // make sure board is not locked and it's user's turn
+    if (this.board_locked || this.is_white != this.turn_white) {
       return
     }
 
     // if a piece is already focused
     if (this.focused_chesspiece) {
 
-
       // additional click unfocuses the piece
-      if (is_coordinate_equal(c, this.focused_chesspiece)) {
-
+      if (is_coordinate_equal({ x, y }, this.focused_chesspiece)) {
         this.unfocus()
       }
 
       // a click on one of the suggestions performs a move
-      else if (is_coordinate_in(c, this.focused_spots)) {
-        this.perform_move(this.focused_chesspiece, c)
+      else if (is_coordinate_in({ x, y }, this.focused_spots)) {
+        this.perform_move(this.focused_chesspiece, { x, y })
       }
 
       // if no piece is focused
     } else {
 
       // if player owns the chess piece - focus on it
-      if (this.chessboard[c.y][c.x]?.is_white == this.is_white) {
-
-        this.focus(c)
-
+      if (this.chessboard[y][x]?.is_white == this.is_white) {
+        this.focus({ x, y })
       }
 
     }
@@ -141,26 +129,17 @@ export class GameComponent implements OnInit {
 
   focus(c: Coordinate): void {
 
-    this.set_lock(true)
-
-    // unfocus current piece
-    if (this.focused_chesspiece) {
-      this.unfocus()
-    }
-
-    // focus new piece
-    this.focused_chesspiece = c
-    this.set_border(c, this.colors.focused_piece, true)
+    this.board_locked = true
+    this.unfocus()
 
     // get all move suggestions and focus on them
+    this.focused_chesspiece = c
     this.http.post<Coordinate[]>(`${ENV.GATEWAY_HTTP_ENDPOINT}/game/${this.game_id}/suggest`, c).subscribe({
       next: (suggestions) => {
-        suggestions.forEach((suggestion) => {
-          this.focused_spots.push(suggestion)
-          this.set_border(suggestion, this.colors.focused_spot, true)
-        })
-
-        this.set_lock(false)
+        this.focused_spots = suggestions
+      },
+      complete: () => {
+        this.board_locked = false
       }
     })
 
@@ -169,37 +148,16 @@ export class GameComponent implements OnInit {
   unfocus(): void {
 
     if (this.focused_chesspiece) {
-      
-      // remove reference to focused chesspiece
-      this.set_border(this.focused_chesspiece, this.colors.focused_piece, false)
       this.focused_chesspiece = undefined
-
-      // remove borders from focused spots
-      this.focused_spots.forEach((spot) => { this.set_border(spot, this.colors.focused_spot, false) })
-
-      // empty list of focused spots
       this.focused_spots = []
     }
-
-  }
-
-  set_border(c: Coordinate, color: string, set: boolean) {
-
-    // get element
-    let chesspiece = document.getElementById(`chesspiece-${c.x}-${c.y}`) as HTMLDivElement
-
-    // set border
-    chesspiece.style.outlineStyle = "solid"
-    chesspiece.style.outlineOffset = "-0.75vh"
-    chesspiece.style.outlineColor = color
-    chesspiece.style.outlineWidth = set ? chesspiece.style.outlineOffset.slice(1) : "0"
 
   }
 
   perform_move(src: Coordinate, dest: Coordinate): void {
 
     // unfocus piece
-    this.set_lock(true)
+    this.board_locked = true
     this.unfocus()
 
     // perform move
@@ -209,10 +167,6 @@ export class GameComponent implements OnInit {
 
   switch_turns() {
     this.turn_white = !this.turn_white
-  }
-
-  set_lock(locked: boolean) {
-    this.locked = locked
   }
 
   log(message: string) {

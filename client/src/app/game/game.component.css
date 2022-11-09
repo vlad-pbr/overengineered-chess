@@ -20,6 +20,28 @@
     flex-direction: row;
 }
 
+.chessboard-black {
+    background-color: #466d1d;
+}
+
+.chessboard-white {
+    background-color: #98bf64;
+}
+
+.focused-piece {
+    outline-style: solid;
+    outline-offset: -0.75vh;
+    outline-width: 0.75vh;
+    outline-color: blue;
+}
+
+.focused-spot {
+    outline-style: solid;
+    outline-offset: -0.75vh;
+    outline-width: 0.75vh;
+    outline-color: aqua;
+}
+
 div[id^=chesspiece-] {
     height: 10vh;
     width: 10vh;
