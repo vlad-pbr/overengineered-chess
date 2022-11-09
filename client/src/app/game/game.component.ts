@@ -24,6 +24,8 @@ export class GameComponent implements OnInit {
   focused_spots: Coordinate[] = []
   board_locked: boolean = false
   chessboard = DEFAULT_CHESSBOARD
+  log: string = ""
+  connection_log: string = ""
   range = range
 
   constructor(private websocketService: WebsocketService, private route: ActivatedRoute, private http: HttpClient) {
@@ -47,23 +49,23 @@ export class GameComponent implements OnInit {
           this.chessboard[e.move.dest_coordinate.y][e.move.dest_coordinate.x] = this.chessboard[e.move.src_coordinate.y][e.move.src_coordinate.x]
           this.chessboard[e.move.src_coordinate.y][e.move.src_coordinate.x] = undefined
           
-          this.switch_turns()
+          this.turn_white = !this.turn_white
           this.board_locked = false
         },
         [EventType.CHECK]: (e) => {
-          this.log("Check!")
+          this.log = "Check!"
         },
         [EventType.CHECKMATE]: (e) => {
           this.board_locked = true
-          this.log(`Checkmate! ${this.turn_white ? 'White' : 'Black'} wins!`)
+          this.log = `Checkmate! ${this.turn_white ? 'White' : 'Black'} wins!`
         }
       }
 
       // subscribe to game moves and handle each move
       this.websocketService.get_events()?.subscribe({
-        next: (e) => { this.log(""); event_resolver[e.event](e) },
+        next: (e) => { this.log = ""; event_resolver[e.event](e) },
         complete: () => {
-          (document.getElementById("connection-log") as HTMLParagraphElement).textContent = "(Game disconnected)"
+          this.connection_log = "(Game disconnected)"
         }
       })
     }
@@ -150,14 +152,6 @@ export class GameComponent implements OnInit {
     // perform move
     let move: Move = { src_coordinate: src, dest_coordinate: dest }
     this.http.post(`${ENV.GATEWAY_HTTP_ENDPOINT}/game/${this.game_id}/move`, move).subscribe({})
-  }
-
-  switch_turns() {
-    this.turn_white = !this.turn_white
-  }
-
-  log(message: string) {
-    (document.getElementById("log") as HTMLParagraphElement).textContent = message
   }
 
 }

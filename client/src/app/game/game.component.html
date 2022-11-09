@@ -13,8 +13,8 @@
             <img *ngIf="chessboard[y][x]" [src]="chessboard[y][x]!.image">
         </div>
     </div>
-    <b><p class="log" id="log"></p></b>
-    <p class="log" id="connection-log"></p>
+    <b><p class="log" id="log">{{ log }}</p></b>
+    <p class="log" id="connection-log">{{ connection_log }}</p>
 </div>
 
 <ng-template #elseBlock>
