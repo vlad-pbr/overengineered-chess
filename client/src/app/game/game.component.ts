@@ -19,14 +19,14 @@ export class GameComponent implements OnInit {
 
   game_id: number
   turn_white: boolean = true
-  is_white?: boolean = undefined
-  focused_chesspiece?: Coordinate = undefined
-  focused_spots: Coordinate[] = []
-  board_locked: boolean = false
+  is_white?: boolean
   chessboard = DEFAULT_CHESSBOARD
   log: string = ""
   connection_log: string = ""
   range = range
+  private focused_chesspiece?: Coordinate
+  private focused_spots: Coordinate[] = []
+  private board_locked: boolean = false
 
   constructor(private websocketService: WebsocketService, private route: ActivatedRoute, private http: HttpClient) {
 
