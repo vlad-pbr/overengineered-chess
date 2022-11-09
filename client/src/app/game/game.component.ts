@@ -22,63 +22,50 @@ export class GameComponent implements OnInit {
   is_white?: boolean = undefined
   focused_chesspiece?: Coordinate = undefined
   focused_spots: Coordinate[] = []
-  board_locked: boolean = true
+  board_locked: boolean = false
   chessboard = DEFAULT_CHESSBOARD
   range = range
 
   constructor(private websocketService: WebsocketService, private route: ActivatedRoute, private http: HttpClient) {
 
-    // resolve params
     this.game_id = parseInt(this.route.snapshot.paramMap.get("game-id") as string)
     let is_white: string = this.route.snapshot.queryParams["is_white"]
     if (is_white != undefined) {
       this.is_white = is_white === 'true'
     }
 
-    // make sure game conditions check out
+  }
+
+  ngOnInit(): void {
+
     if (this.check_conditions()) {
 
-      let handle_event = (e: GameEvent) => {
-
-        this.log("")
-
-        // handle move event
-        if (e.event === EventType.MOVE) {
+      const event_resolver: { [event: string]: (e: GameEvent) => void } = {
+        [EventType.MOVE]: (e) => {
 
           // perform move on chessboard
           this.chessboard[e.move.dest_coordinate.y][e.move.dest_coordinate.x] = this.chessboard[e.move.src_coordinate.y][e.move.src_coordinate.x]
           this.chessboard[e.move.src_coordinate.y][e.move.src_coordinate.x] = undefined
-
-          // switch turns
+          
           this.switch_turns()
-
-          // unlock board
           this.board_locked = false
-        }
-
-        // handle check
-        else if (e.event === EventType.CHECK) {
+        },
+        [EventType.CHECK]: (e) => {
           this.log("Check!")
-        }
-
-        // handle checkmate
-        else if (e.event === EventType.CHECKMATE) {
+        },
+        [EventType.CHECKMATE]: (e) => {
           this.board_locked = true
           this.log(`Checkmate! ${this.turn_white ? 'White' : 'Black'} wins!`)
         }
       }
 
       // subscribe to game moves and handle each move
-      websocketService.get_events()?.subscribe({
-        next: (e) => { handle_event(e) },
+      this.websocketService.get_events()?.subscribe({
+        next: (e) => { this.log(""); event_resolver[e.event](e) },
         complete: () => {
           (document.getElementById("connection-log") as HTMLParagraphElement).textContent = "(Game disconnected)"
         }
       })
-
-      // unlock board
-      this.board_locked = false
-
     }
 
   }
@@ -171,9 +158,6 @@ export class GameComponent implements OnInit {
 
   log(message: string) {
     (document.getElementById("log") as HTMLParagraphElement).textContent = message
-  }
-
-  ngOnInit(): void {
   }
 
 }
