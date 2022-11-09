@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 
+import { range } from '../shared/utils'
 import { GameEvent, EventType } from '../shared/models/gameevent.model'
 import { Coordinate, is_coordinate_in, is_coordinate_equal } from '../shared/models/coordinate.model'
 import { Move } from '../shared/models/move.model'
@@ -23,6 +24,7 @@ export class GameComponent implements OnInit {
   focused_spots: Coordinate[] = []
   locked: boolean = true
   chessboard = DEFAULT_CHESSBOARD
+  range = range
   colors = {
     black: "#466d1d",
     white: "#98bf64",
