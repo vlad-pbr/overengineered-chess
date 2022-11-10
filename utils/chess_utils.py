@@ -26,10 +26,6 @@ class Coordinate(BaseModel):
     x: Literal[VALID_COORDINATE]  # pylance does not like this for some reason
     y: Literal[VALID_COORDINATE]
 
-    @staticmethod
-    def from_literals(x: Literal[VALID_COORDINATE], y: Literal[VALID_COORDINATE]) -> 'Coordinate':
-        return Coordinate(**{"x": x, "y": y})
-
 
 class Move(BaseModel):
     src_coordinate: Coordinate
@@ -72,8 +68,8 @@ class Pawn(ChessPiece):
 
             # derive xy of current iteration
             try:
-                c = Coordinate.from_literals(
-                    coordinate.x, coordinate.y + (-i if self.is_white else i))
+                c = Coordinate(x=coordinate.x, y=(
+                    coordinate.y + (-i if self.is_white else i)))
             except ValidationError:
                 break
 
@@ -88,8 +84,8 @@ class Pawn(ChessPiece):
 
             # derive xy of current iteration
             try:
-                c = Coordinate.from_literals(
-                    coordinate.x + i, coordinate.y + (-1 if self.is_white else 1))
+                c = Coordinate(x=(coordinate.x + i),
+                               y=(coordinate.y + (-1 if self.is_white else 1)))
             except ValidationError:
                 continue
 
@@ -114,8 +110,8 @@ class Rook(ChessPiece):
 
             try:
 
-                c = Coordinate.from_literals(
-                    coordinate.x + i[0], coordinate.y + i[1])
+                c = Coordinate(
+                    x=(coordinate.x + i[0]), y=(coordinate.y + i[1]))
                 piece = board.get(c)
 
                 # while within borders
@@ -135,8 +131,8 @@ class Rook(ChessPiece):
                         out.append(c)
 
                     # advance
-                    c = Coordinate.from_literals(
-                        coordinate.x + (i[0] * multiplier), coordinate.y + (i[1] * multiplier))
+                    c = Coordinate(
+                        x=(coordinate.x + (i[0] * multiplier)), y=(coordinate.y + (i[1] * multiplier)))
                     multiplier += 1
                     piece = board.get(c)
 
@@ -161,8 +157,8 @@ class Knight(ChessPiece):
         ]:
 
             try:
-                c = Coordinate.from_literals(
-                    coordinate.x + i[0], coordinate.y + i[1])
+                c = Coordinate(
+                    x=(coordinate.x + i[0]), y=(coordinate.y + i[1]))
             except ValidationError:
                 continue
 
@@ -187,8 +183,8 @@ class Bishop(ChessPiece):
 
             try:
 
-                c = Coordinate.from_literals(
-                    coordinate.x + i[0], coordinate.y + i[1])
+                c = Coordinate(
+                    x=(coordinate.x + i[0]), y=(coordinate.y + i[1]))
                 piece = board.get(c)
 
                 # while within borders
@@ -208,8 +204,8 @@ class Bishop(ChessPiece):
                         out.append(c)
 
                     # advance
-                    c = Coordinate.from_literals(
-                        coordinate.x + (i[0] * multiplier), coordinate.y + (i[1] * multiplier))
+                    c = Coordinate(
+                        x=(coordinate.x + (i[0] * multiplier)), y=(coordinate.y + (i[1] * multiplier)))
                     multiplier += 1
                     piece = board.get(c)
 
@@ -242,8 +238,8 @@ class King(ChessPiece):
         ]:
 
             try:
-                c = Coordinate.from_literals(
-                    coordinate.x + i[0], coordinate.y + i[1])
+                c = Coordinate(
+                    x=(coordinate.x + i[0]), y=(coordinate.y + i[1]))
             except ValidationError:
                 continue
 
@@ -387,7 +383,7 @@ class ChessBoard:
         for y in range(0, 8):
             for x in range(0, 8):
 
-                c = Coordinate.from_literals(x, y)
+                c = Coordinate(x=x, y=y)
                 piece = self.get(c)
 
                 # if piece is found
