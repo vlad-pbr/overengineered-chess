@@ -65,7 +65,7 @@ export class GameComponent implements OnInit {
         }
 
         // subscribe to game moves and handle each move
-        this.websocketService.get_events()?.subscribe({
+        this.websocketService.get_events$().subscribe({
           next: (e) => { this.log = ""; event_resolver[e.event](e) },
           complete: () => {
             this.connection_log = "(Game disconnected)"

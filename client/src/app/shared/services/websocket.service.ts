@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, Observer } from 'rxjs';
+import { Subject } from 'rxjs';
 
 import { GameEvent } from '../models/gameevent.model'
 import { ENV } from '../env'
@@ -7,7 +7,7 @@ import { ENV } from '../env'
 @Injectable()
 export class WebsocketService {
 
-  private observable?: Observable<GameEvent>
+  private game_events$ = new Subject<GameEvent>()
   private ws?: WebSocket
 
   constructor() { }
@@ -25,22 +25,16 @@ export class WebsocketService {
     // handle successful connection
     this.ws.onopen = () => {
 
-      this.ws!.onerror = null
-
-      this.observable = new Observable((observer: Observer<GameEvent>) => {
-
-        this.ws!.onmessage = (messageEvent: MessageEvent<any>) => {
-          observer.next(JSON.parse(messageEvent.data) as GameEvent)
-        }
-        this.ws!.onclose = (closeEvent: CloseEvent) => {
-          observer.complete()
-          this.ws = undefined
-        }
-        this.ws!.onerror = (ev: Event) => {
-          console.log(ev)
-        }
-
-      })
+      this.ws!.onmessage = (messageEvent: MessageEvent<any>) => {
+        this.game_events$.next(JSON.parse(messageEvent.data) as GameEvent)
+      }
+      this.ws!.onclose = (closeEvent: CloseEvent) => {
+        this.game_events$.complete()
+        this.ws = undefined
+      }
+      this.ws!.onerror = (ev: Event) => {
+        console.log(ev)
+      }
 
       success_callback()
     }
@@ -50,7 +44,7 @@ export class WebsocketService {
     return !!this.ws
   }
 
-  get_events(): Observable<GameEvent> | undefined {
-    return this.connected() ? this.observable : undefined
+  get_events$(): Subject<GameEvent> {
+    return this.game_events$
   }
 }
