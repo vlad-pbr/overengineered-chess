@@ -46,6 +46,14 @@ export class GameComponent implements OnInit {
 
       const setup = () => {
 
+        const handle_init_timeout = (): NodeJS.Timeout => {
+          if (this.init_timeout_id) {
+            clearTimeout(this.init_timeout_id)
+          }
+          return setTimeout(() => { this.init_complete = true }, 1000)
+        }
+        this.init_timeout_id = handle_init_timeout()
+
         const event_resolver: { [event: string]: (e: GameEvent) => void } = {
           [EventType.MOVE]: (e) => {
 
@@ -59,10 +67,7 @@ export class GameComponent implements OnInit {
             // component is not rendered until init_complete is true
             // if 1s passes since the last move received - render the component
             if (!this.init_complete) {
-              if (this.init_timeout_id) {
-                clearTimeout(this.init_timeout_id)
-              }
-              this.init_timeout_id = setTimeout(() => { this.init_complete = true }, 1000)
+              this.init_timeout_id = handle_init_timeout()
             }
           },
           [EventType.CHECK]: (e) => {
