@@ -5,7 +5,6 @@ import { HttpClient } from '@angular/common/http';
 import { range } from '../shared/utils'
 import { GameEvent, EventType } from '../shared/models/gameevent.model'
 import { Coordinate, is_coordinate_in, is_coordinate_equal } from '../shared/models/coordinate.model'
-import { Move } from '../shared/models/move.model'
 import { DEFAULT_CHESSBOARD } from '../shared/models/chesspiece.model'
 import { WebsocketService } from '../shared/services/websocket.service'
 import { ENV } from '../shared/env'
