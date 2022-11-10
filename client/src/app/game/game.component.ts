@@ -123,7 +123,7 @@ export class GameComponent implements OnInit {
     } else {
 
       // if player owns the chess piece - focus on it
-      if (this.chessboard[y][x] && this.chessboard[y][x]!.is_white == this.is_white) {
+      if (this.chessboard[y][x] && this.chessboard[y][x]!.is_white === this.is_white) {
         this.focus({ x, y })
       }
 

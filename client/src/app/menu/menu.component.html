@@ -3,7 +3,7 @@
         <span>Color</span>
         <span *ngFor="let color of [ 'white', 'black' ]">
             <input type="radio" name="color" [id]="'color-' + color" [value]="color"
-                [checked]="is_white == (color === 'white')" (input)="handle_color_change($event)">
+                [checked]="is_white === (color === 'white')" (input)="handle_color_change($event)">
             <label [for]="'color-' + color">{{ color }}</label>
         </span>
     </div>
