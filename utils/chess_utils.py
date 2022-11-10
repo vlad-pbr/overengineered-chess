@@ -265,7 +265,42 @@ class ChessBoard:
     Moves can then be performed on that board using move() 
     """
 
-    def __init__(self, game_id: int, redis: Redis) -> None:
+    def __init__(self) -> None:
+
+        # init empty chess board matrix
+        self._matrix = [[None for _ in range(0, 8)] for _ in range(0, 8)]
+        self.history = []
+
+        # spawn pawns
+        for y in [(1, False), (6, True)]:
+            for x in range(0, 8):
+                self._matrix[y[0]][x] = Pawn(y[1])
+
+        # spawn rooks
+        for y in [(0, False), (7, True)]:
+            for x in [0, 7]:
+                self._matrix[y[0]][x] = Rook(y[1])
+
+        # spawn knights
+        for y in [(0, False), (7, True)]:
+            for x in [1, 6]:
+                self._matrix[y[0]][x] = Knight(y[1])
+
+        # spawn bishops
+        for y in [(0, False), (7, True)]:
+            for x in [2, 5]:
+                self._matrix[y[0]][x] = Bishop(y[1])
+
+        # spawn queens
+        for y in [(0, False), (7, True)]:
+            self._matrix[y[0]][3] = Queen(y[1])
+
+        # spawn kings
+        for y in [(0, False), (7, True)]:
+            self._matrix[y[0]][4] = King(y[1])
+
+    @staticmethod
+    def from_redis(game_id: int, redis: Redis) -> 'ChessBoard':
 
         # custom game move iterator, because why not
         class Game:
@@ -298,41 +333,12 @@ class ChessBoard:
 
                         raise StopIteration
 
-        # init empty chess board matrix
-        self._matrix = [[None for _ in range(0, 8)] for _ in range(0, 8)]
-
-        # spawn pawns
-        for y in [(1, False), (6, True)]:
-            for x in range(0, 8):
-                self._matrix[y[0]][x] = Pawn(y[1])
-
-        # spawn rooks
-        for y in [(0, False), (7, True)]:
-            for x in [0, 7]:
-                self._matrix[y[0]][x] = Rook(y[1])
-
-        # spawn knights
-        for y in [(0, False), (7, True)]:
-            for x in [1, 6]:
-                self._matrix[y[0]][x] = Knight(y[1])
-
-        # spawn bishops
-        for y in [(0, False), (7, True)]:
-            for x in [2, 5]:
-                self._matrix[y[0]][x] = Bishop(y[1])
-
-        # spawn queens
-        for y in [(0, False), (7, True)]:
-            self._matrix[y[0]][3] = Queen(y[1])
-
-        # spawn kings
-        for y in [(0, False), (7, True)]:
-            self._matrix[y[0]][4] = King(y[1])
-
         # add each move to chessboard
-        self.history = []
+        board = ChessBoard()
         for move in Game(game_id, redis):
-            self.move(move)
+            board.move(move)
+
+        return board
 
     def get(self, c: Coordinate):
         """

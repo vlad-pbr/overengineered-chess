@@ -176,7 +176,7 @@ def suggest_move(game_id: int, coordinate: Coordinate = Body()):
                         content=f"Game with ID {game_id} does not exist.")
 
     # read current game
-    board = ChessBoard(game_id, redis)
+    board = ChessBoard.from_redis(game_id, redis)
     piece = board.get(coordinate)
 
     # make sure chess piece exists on the board

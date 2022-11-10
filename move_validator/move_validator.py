@@ -37,7 +37,7 @@ def validate_move(game_id: int, move: Move = Body()):
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
     # init board for given game
-    board = ChessBoard(game_id, redis)
+    board = ChessBoard.from_redis(game_id, redis)
 
     # check if move is valid
     if not board.move(move):

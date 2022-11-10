@@ -42,7 +42,7 @@ def main():
         else:
 
             # get board of current game
-            event = ChessBoard(game_id, redis).find_checks()
+            event = ChessBoard.from_redis(game_id, redis).find_checks()
 
             # if check detected
             if event:
