@@ -18,8 +18,8 @@ export class WebsocketService {
     this.ws = new WebSocket(`${ENV.GATEWAY_WS_ENDPOINT}/game/${game_id}/join`)
 
     // handle error during connection
-    this.ws.onerror = () => {
-      error_callback()
+    this.ws.onerror = (ev: Event) => {
+      error_callback(ev)
     }
 
     // handle successful connection

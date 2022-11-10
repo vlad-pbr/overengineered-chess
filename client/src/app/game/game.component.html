@@ -1,4 +1,4 @@
-<div *ngIf="is_connected(); else disconnected" id="chessboard">
+<div *ngIf="is_connected() && !!!connection_error; else disconnected" id="chessboard">
     <div id="info-bar">
         <div class="info-bar-item">Game ID: {{ game_id }}</div>
         <div class="info-bar-item">Your color: {{ is_white ? "White" : "Black" }}</div>
@@ -19,7 +19,12 @@
 
 <ng-template #disconnected>
     <div *ngIf="check_params(); else invalidParams">
-        Connecting...
+        <div *ngIf="connection_error; else connecting">
+            Could not connect to game {{ game_id }}: {{ connection_error }}
+        </div>
+        <ng-template #connecting>
+            Connecting...
+        </ng-template>
     </div>
     <ng-template #invalidParams>
         Invalid request. Go back to <a href="/menu">menu</a>.

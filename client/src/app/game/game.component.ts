@@ -23,6 +23,7 @@ export class GameComponent implements OnInit {
   chessboard = DEFAULT_CHESSBOARD
   log: string = ""
   connection_log: string = ""
+  connection_error: string = ""
   range = range
   private focused_chesspiece?: Coordinate
   private focused_spots: Coordinate[] = []
@@ -75,7 +76,7 @@ export class GameComponent implements OnInit {
 
       if (!this.websocketService.connected()) {
         this.websocketService.connect(this.game_id, setup, () => {
-          // TODO connection failed
+          this.connection_error = "game does not exist"
         })
       } else {
         setup()
@@ -164,8 +165,8 @@ export class GameComponent implements OnInit {
     this.unfocus()
 
     // perform move
-    let move: Move = { src_coordinate: src, dest_coordinate: dest }
-    this.http.post(`${ENV.GATEWAY_HTTP_ENDPOINT}/game/${this.game_id}/move`, move).subscribe({})
+    this.http.post(`${ENV.GATEWAY_HTTP_ENDPOINT}/game/${this.game_id}/move`,
+      { src_coordinate: src, dest_coordinate: dest }).subscribe()
   }
 
 }
