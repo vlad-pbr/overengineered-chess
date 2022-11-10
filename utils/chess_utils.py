@@ -10,6 +10,7 @@ from enum import Enum
 from typing import Literal
 from pydantic import BaseModel, ValidationError
 from redis import Redis
+from abc import ABC, abstractmethod
 
 # list of all valid axis values
 VALID_COORDINATE = tuple([*range(0, 8)])
@@ -33,7 +34,7 @@ class Move(BaseModel):
 
 
 class GameEvent(BaseModel):
-    pass
+    event: str
 
 
 class MoveGameEvent(GameEvent):
@@ -49,10 +50,14 @@ class CheckmateGameEvent(GameEvent):
     event: str = EventTypes.CHECKMATE.value
 
 
-class ChessPiece():
+class ChessPiece(ABC):
 
     def __init__(self, is_white: bool) -> None:
         self.is_white = is_white
+
+    @abstractmethod
+    def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
+        pass
 
 
 class Pawn(ChessPiece):
