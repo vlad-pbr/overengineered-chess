@@ -1,4 +1,4 @@
-<div *ngIf="is_connected() && !!!connection_error; else disconnected" id="chessboard">
+<div *ngIf="is_connected() && !!!connection_error && init_complete; else disconnected" id="chessboard">
     <div id="info-bar">
         <div class="info-bar-item">Game ID: {{ game_id }}</div>
         <div class="info-bar-item">Your color: {{ is_white ? "White" : "Black" }}</div>

@@ -23,6 +23,8 @@ export class GameComponent implements OnInit {
   log: string = ""
   connection_log: string = ""
   connection_error: string = ""
+  init_complete: boolean = false
+  init_timeout_id?: NodeJS.Timeout
   range = range
   private focused_chesspiece?: Coordinate
   private focused_spots: Coordinate[] = []
@@ -53,6 +55,15 @@ export class GameComponent implements OnInit {
 
             this.turn_white = !this.turn_white
             this.board_locked = false
+
+            // component is not rendered until init_complete is true
+            // if 1s passes since the last move received - render the component
+            if (!this.init_complete) {
+              if (this.init_timeout_id) {
+                clearTimeout(this.init_timeout_id)
+              }
+              this.init_timeout_id = setTimeout(() => { this.init_complete = true }, 1000)
+            }
           },
           [EventType.CHECK]: (e) => {
             this.log = "Check!"
