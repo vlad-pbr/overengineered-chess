@@ -38,12 +38,12 @@ export const DEFAULT_CHESSBOARD: (ChessPiece[])[] =
     [
         [
             ChessPieces.ROOK_BLACK,
-            ChessPieces.BISHOP_BLACK,
             ChessPieces.KNIGHT_BLACK,
+            ChessPieces.BISHOP_BLACK,
             ChessPieces.QUEEN_BLACK,
             ChessPieces.KING_BLACK,
-            ChessPieces.KNIGHT_BLACK,
             ChessPieces.BISHOP_BLACK,
+            ChessPieces.KNIGHT_BLACK,
             ChessPieces.ROOK_BLACK,
         ],
         [
@@ -72,12 +72,12 @@ export const DEFAULT_CHESSBOARD: (ChessPiece[])[] =
         ],
         [
             ChessPieces.ROOK_WHITE,
-            ChessPieces.BISHOP_WHITE,
             ChessPieces.KNIGHT_WHITE,
+            ChessPieces.BISHOP_WHITE,
             ChessPieces.QUEEN_WHITE,
             ChessPieces.KING_WHITE,
-            ChessPieces.KNIGHT_WHITE,
             ChessPieces.BISHOP_WHITE,
+            ChessPieces.KNIGHT_WHITE,
             ChessPieces.ROOK_WHITE
         ]
     ]
