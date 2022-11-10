@@ -30,16 +30,10 @@ class Coordinate(BaseModel):
     def from_literals(x: Literal[VALID_COORDINATE], y: Literal[VALID_COORDINATE]) -> 'Coordinate':
         return Coordinate(**{"x": x, "y": y})
 
-    def __eq__(self, other: 'Coordinate'):
-        return self.x == other.x and self.y == other.y
-
 
 class Move(BaseModel):
     src_coordinate: Coordinate
     dest_coordinate: Coordinate
-
-    def __eq__(self, other: 'Move'):
-        return self.src_coordinate == other.src_coordinate and self.dest_coordinate == other.dest_coordinate
 
 
 class GameEvent(BaseModel):
@@ -49,9 +43,6 @@ class GameEvent(BaseModel):
 class MoveGameEvent(GameEvent):
     event: str = EventTypes.MOVE.value
     move: Move
-
-    def __eq__(self, other: 'MoveGameEvent'):
-        return self.event == other.event and self.move == other.move
 
 
 class CheckGameEvent(GameEvent):
