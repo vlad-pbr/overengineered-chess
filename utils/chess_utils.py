@@ -7,7 +7,7 @@ overengineered game of chess.
 
 import json
 from enum import Enum
-from typing import Literal
+from typing import Literal, List, Union
 from pydantic import BaseModel, ValidationError
 from redis import Redis
 from abc import ABC, abstractmethod
@@ -56,7 +56,7 @@ class ChessPiece(ABC):
         self.is_white = is_white
 
     @abstractmethod
-    def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
+    def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> List[Coordinate]:
         pass
 
 
@@ -64,7 +64,7 @@ class Pawn(ChessPiece):
 
     first_move: bool = True
 
-    def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
+    def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> List[Coordinate]:
 
         out = []
 
@@ -105,7 +105,7 @@ class Pawn(ChessPiece):
 
 class Rook(ChessPiece):
 
-    def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
+    def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> List[Coordinate]:
 
         out = []
 
@@ -149,7 +149,7 @@ class Rook(ChessPiece):
 
 class Knight(ChessPiece):
 
-    def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
+    def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> List[Coordinate]:
 
         out = []
 
@@ -178,7 +178,7 @@ class Knight(ChessPiece):
 
 class Bishop(ChessPiece):
 
-    def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
+    def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> List[Coordinate]:
 
         out = []
 
@@ -222,7 +222,7 @@ class Bishop(ChessPiece):
 
 class Queen(ChessPiece):
 
-    def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
+    def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> List[Coordinate]:
 
         return Rook(self.is_white).get_valid_moves(board, coordinate) \
             + Bishop(self.is_white).get_valid_moves(board, coordinate)
@@ -230,7 +230,7 @@ class Queen(ChessPiece):
 
 class King(ChessPiece):
 
-    def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> list:
+    def _get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate, recursive: bool) -> List[Coordinate]:
 
         out = []
 
@@ -254,7 +254,57 @@ class King(ChessPiece):
             if piece == None or (piece and piece.is_white != self.is_white):
                 out.append(c)
 
+        if recursive:
+
+            bad_coordinates: List[Coordinate] = []
+
+            def _is_bad_move(_c: Coordinate) -> bool:
+                
+                # iterate board
+                for y in range(0, 8):
+
+                    for x in range(0, 8):
+
+                        piece = board._matrix[y][x]
+
+                        # if piece is opposite color
+                        if piece and self.is_white != piece.is_white:
+
+                            # get moves of current piece
+                            if isinstance(piece, King):
+                                coordinates = piece._get_valid_moves(
+                                    board, Coordinate(x=x, y=y), False)
+                            else:
+                                coordinates = piece.get_valid_moves(
+                                    board, Coordinate(x=x, y=y))
+
+                            # if one of the moves matches the new king's location - filter out
+                            if _c in coordinates:
+                                return True
+
+                return False
+
+            for new_coordinate in out:
+
+                # perform move on new coordinate
+                board._move(Move(
+                    src_coordinate=coordinate,
+                    dest_coordinate=new_coordinate
+                ))
+
+                if _is_bad_move(new_coordinate):
+                    bad_coordinates.append(new_coordinate)
+
+                # undo the move
+                board.undo()
+
+            # filter out bad coordinates
+            out = [ _c for _c in out if _c not in bad_coordinates ]
+
         return out
+
+    def get_valid_moves(self, board: 'ChessBoard', coordinate: Coordinate) -> List[Coordinate]:
+        return self._get_valid_moves(board, coordinate, True)
 
 
 class ChessBoard:
@@ -265,11 +315,19 @@ class ChessBoard:
     Moves can then be performed on that board using move() 
     """
 
+    class HistoryMove:
+
+        def __init__(self, move: Move, src_piece: ChessPiece, dest_piece: ChessPiece) -> None:
+            self.move = move
+            self.src_piece = src_piece
+            self.dest_piece = dest_piece
+
     def __init__(self) -> None:
 
         # init empty chess board matrix
-        self._matrix = [[None for _ in range(0, 8)] for _ in range(0, 8)]
-        self.history = []
+        self._matrix: List[List[Union[ChessPiece, None]]] = [
+            [None for _ in range(0, 8)] for _ in range(0, 8)]
+        self.history: List[self.HistoryMove] = []
 
         # spawn pawns
         for y in [(1, False), (6, True)]:
@@ -299,8 +357,8 @@ class ChessBoard:
         for y in [(0, False), (7, True)]:
             self._matrix[y[0]][4] = King(y[1])
 
-    @staticmethod
-    def from_redis(game_id: int, redis: Redis) -> 'ChessBoard':
+    @classmethod
+    def from_redis(cls, game_id: int, redis: Redis) -> 'ChessBoard':
 
         # custom game move iterator, because why not
         class Game:
@@ -334,7 +392,7 @@ class ChessBoard:
                         raise StopIteration
 
         # add each move to chessboard
-        board = ChessBoard()
+        board = cls()
         for move in Game(game_id, redis):
             board.move(move)
 
@@ -352,6 +410,26 @@ class ChessBoard:
             return self._matrix[c.y][c.x]
         except IndexError:
             return False
+
+    def _move(self, move: Move) -> None:
+        """
+        Performs move on a chessboard without validation.
+        """
+
+        # store move in history
+        history_move = self.HistoryMove(
+            move,
+            self._matrix[move.src_coordinate.y][move.src_coordinate.x],
+            self._matrix[move.dest_coordinate.y][move.dest_coordinate.x]
+        )
+        self.history.append(history_move)
+
+        # move piece
+        self._matrix[move.dest_coordinate.y][move.dest_coordinate.x] = history_move.src_piece
+        self._matrix[move.src_coordinate.y][move.src_coordinate.x] = None
+
+        if isinstance(history_move.src_piece, Pawn):
+            history_move.src_piece.first_move = False
 
     def move(self, move: Move) -> bool:
         """
@@ -374,15 +452,39 @@ class ChessBoard:
             return False
 
         # move piece
-        self._matrix[move.src_coordinate.y][move.src_coordinate.x] = None
-        self._matrix[move.dest_coordinate.y][move.dest_coordinate.x] = piece
-
-        self.history.append(move)
-
-        if isinstance(piece, Pawn):
-            piece.first_move = False
+        self._move(move)
 
         return True
+
+    def undo(self) -> bool:
+        """
+        Reverses the last performed move.
+        Returns True if history is not empty and undo is successful.
+        Returns False otherwise.
+        """
+
+        try:
+            # history_move = self.HistoryMove(self.history.pop())
+            history_move = self.history.pop()
+        except IndexError:
+            return False
+
+        # undo move
+        self._matrix[history_move.move.src_coordinate.y][history_move.move.src_coordinate.x] = history_move.src_piece
+        self._matrix[history_move.move.dest_coordinate.y][history_move.move.dest_coordinate.x] = history_move.dest_piece
+
+        # handle pawn first move edgecase
+        pawn_first_move = True
+        if isinstance(history_move.src_piece, Pawn):
+
+            # if the same pawn has been found - not first move
+            for _history_move in self.history:
+                # _history_move = self.HistoryMove(_history_move)
+                if _history_move.src_piece == history_move.src_piece:
+                    pawn_first_move = False
+                    break
+
+            history_move.src_piece.first_move = pawn_first_move
 
     def find_checks(self):
         """
