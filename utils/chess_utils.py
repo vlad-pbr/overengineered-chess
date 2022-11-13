@@ -48,6 +48,7 @@ class CheckGameEvent(GameEvent):
 
 class CheckmateGameEvent(GameEvent):
     event: str = EventTypes.CHECKMATE.value
+    white_wins: bool
 
 
 class ChessPiece(ABC):
@@ -509,17 +510,23 @@ class ChessBoard:
                         target_piece = self.get(spot)
 
                         if target_piece \
-                                and self.is_white_turn() == target_piece.is_white \
                                 and isinstance(target_piece, King) \
                                 and piece.is_white != target_piece.is_white:
 
-                            # if king is out of spots to run - checkmate
-                            target_king_spots = target_piece.get_valid_moves(
-                                self, spot)
-                            if target_king_spots:
-                                return CheckGameEvent()
+                            if self.is_white_turn() == target_piece.is_white:
+
+                                # if king is out of spots to run - checkmate
+                                target_king_spots = target_piece.get_valid_moves(
+                                    self, spot)
+                                if target_king_spots:
+                                    return CheckGameEvent()
+                                else:
+                                    return CheckmateGameEvent(white_wins=(not target_piece.is_white))
+
+                            # if turn is of the opposite team - checkmate
+                            # TODO so this is always wrong in terms of color
                             else:
-                                return CheckmateGameEvent()
+                                return CheckmateGameEvent(white_wins=(not target_piece.is_white))
 
         return None
 

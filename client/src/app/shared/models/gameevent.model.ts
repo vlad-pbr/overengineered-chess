@@ -9,4 +9,5 @@ export enum EventType {
 export interface GameEvent {
     event: EventType
     move: Move
+    white_wins: boolean
 }
