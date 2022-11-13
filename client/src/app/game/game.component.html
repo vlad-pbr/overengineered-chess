@@ -14,7 +14,6 @@
         </div>
     </div>
     <b><p class="log" id="log">{{ log }}</p></b>
-    <p class="log" id="connection-log">{{ connection_log }}</p>
 </div>
 
 <ng-template #disconnected>
@@ -23,7 +22,7 @@
             Could not connect to game {{ game_id }}: {{ connection_error }}
         </div>
         <ng-template #connecting>
-            Connecting...
+            {{ connection_log }}
         </ng-template>
     </div>
     <ng-template #invalidParams>

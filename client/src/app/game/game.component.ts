@@ -21,7 +21,7 @@ export class GameComponent implements OnInit {
   is_white?: boolean
   chessboard = DEFAULT_CHESSBOARD
   log: string = ""
-  connection_log: string = ""
+  connection_log: string = "Connecting..."
   connection_error: string = ""
   init_complete: boolean = false
   init_timeout_id?: NodeJS.Timeout
@@ -83,7 +83,7 @@ export class GameComponent implements OnInit {
         this.websocketService.get_events$().subscribe({
           next: (e) => { this.log = ""; event_resolver[e.event](e) },
           complete: () => {
-            this.connection_log = "(Game disconnected)"
+            this.connection_log = "game ended"
           }
         })
 
