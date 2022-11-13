@@ -259,7 +259,7 @@ class King(ChessPiece):
             bad_coordinates: List[Coordinate] = []
 
             def _is_bad_move(_c: Coordinate) -> bool:
-                
+
                 # iterate board
                 for y in range(0, 8):
 
@@ -299,7 +299,7 @@ class King(ChessPiece):
                 board.undo()
 
             # filter out bad coordinates
-            out = [ _c for _c in out if _c not in bad_coordinates ]
+            out = [_c for _c in out if _c not in bad_coordinates]
 
         return out
 
@@ -464,7 +464,6 @@ class ChessBoard:
         """
 
         try:
-            # history_move = self.HistoryMove(self.history.pop())
             history_move = self.history.pop()
         except IndexError:
             return False
@@ -479,7 +478,6 @@ class ChessBoard:
 
             # if the same pawn has been found - not first move
             for _history_move in self.history:
-                # _history_move = self.HistoryMove(_history_move)
                 if _history_move.src_piece == history_move.src_piece:
                     pawn_first_move = False
                     break
