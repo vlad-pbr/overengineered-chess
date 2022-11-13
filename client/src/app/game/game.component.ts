@@ -75,7 +75,7 @@ export class GameComponent implements OnInit {
           },
           [EventType.CHECKMATE]: (e) => {
             this.board_locked = true
-            this.log = `Checkmate! ${this.turn_white ? 'White' : 'Black'} wins!`
+            this.log = `Checkmate! ${!this.turn_white ? 'White' : 'Black'} wins!`
           }
         }
 

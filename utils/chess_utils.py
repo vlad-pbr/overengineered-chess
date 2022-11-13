@@ -509,10 +509,14 @@ class ChessBoard:
                         target_piece = self.get(spot)
 
                         if target_piece \
+                                and self.is_white_turn() == target_piece.is_white \
                                 and isinstance(target_piece, King) \
                                 and piece.is_white != target_piece.is_white:
 
-                            if self.is_white_turn() == target_piece.is_white:
+                            # if king is out of spots to run - checkmate
+                            target_king_spots = target_piece.get_valid_moves(
+                                self, spot)
+                            if target_king_spots:
                                 return CheckGameEvent()
                             else:
                                 return CheckmateGameEvent()
