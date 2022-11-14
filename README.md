@@ -76,3 +76,32 @@ It reads the following environment variables:
 - `REDIS_HOST`: redis host to work with (default: `localhost`)
 - `REDIS_PORT`: port to use when connecting to redis (default: `6379`)
 - `ENDGAME_STREAM_NAME`: name for the redis stream to use to read move notifications from move validator
+
+# Deployment
+
+For the purpose of this exercise, we will deploy a custom Jenkins image (with Docker capabilities) and make it build, test and deploy all of the microservices using Docker Swarm, all on one node.
+
+## Prerequisites
+
+- `docker-ce` installed w/ swarm support
+- this repo cloned on your machine
+
+## Jenkins
+
+Build the custom Jenkins image from the `jenkins` directory:
+
+```sh
+docker build -t docker.io/vladpbr/overengineered-chess-jenkins:2.377 jenkins/
+```
+
+Now deploy it using the following command:
+
+```sh
+docker run --name jenkins -d -v ~/jenkins_home:/var/jenkins_home -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 docker.io/vladpbr/overengineered-chess-jenkins:2.377
+```
+
+Access Jenkins via `http://localhost:8080`, enter credentials (as seen in `docker logs jenkins`), install default plugins upon request, "skip and continue as admin", "not now", "start using jenkins".
+
+## Deployment pipeline
+
+TODO
