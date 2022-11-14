@@ -1,4 +1,4 @@
-version: "3"
+version: "3.8"
   
 services:
 
@@ -10,6 +10,8 @@ services:
       - '80:80'
     volumes:
       - ./env.json:/usr/share/nginx/html/env.json:ro
+    depends_on:
+      - gateway
 
   gateway:
     image: gateway:latest
@@ -20,6 +22,10 @@ services:
     environment:
         - REDIS_HOST=redis
         - MOVE_VALIDATOR_ENDPOINT=http://move_validator:8001
+    depends_on:
+      - redis
+      - move_validator
+      - endgame_validator
 
   redis:
     image: redis:7.0.5 
@@ -32,6 +38,8 @@ services:
       replicas: 3
     environment:
       - REDIS_HOST=redis
+    depends_on:
+      - redis
 
   endgame_validator:
     image: endgame_validator:latest
@@ -39,3 +47,5 @@ services:
       replicas: 1
     environment:
       - REDIS_HOST=redis
+    depends_on:
+      - redis
