@@ -23,6 +23,15 @@ The following chapters explain how each moving part functions.
 
 Angular client for the game. It lets user choose a color and create or join games using a game ID. It only communicates with the gateway.
 
+It reads the following JSON file at `/usr/share/nginx/html/env.json`:
+
+```json
+{
+    "GATEWAY_HTTP_ENDPOINT": "http://localhost:8000",
+    "GATEWAY_WS_ENDPOINT": "ws://localhost:8000"
+}
+```
+
 ## Gateway
 
 Gateway is the entity which sits between the user and the rest of the app. It's responsible for game management - creation of new games, state of the current games and addition of new moves.
@@ -38,7 +47,7 @@ It reads the following environment variables:
 
 - `REDIS_HOST`: redis host to work with (default: `localhost`)
 - `REDIS_PORT`: port to use when connecting to redis (default: `6379`)
-- `MOVE_VALIDATOR_ENDPOINT`: endpoint to query for move validation (default: `http://localhost:8001/validate`)
+- `MOVE_VALIDATOR_ENDPOINT`: endpoint to query for move validation (default: `http://localhost:8001`)
 
 ## Redis
 

@@ -1,0 +1,41 @@
+version: "3"
+  
+services:
+
+  client:
+    image: client:latest
+    deploy:
+      replicas: 3
+    ports:
+      - '80:80'
+    volumes:
+      - ./env.json:/usr/share/nginx/html/env.json:ro
+
+  gateway:
+    image: gateway:latest
+    deploy:
+      replicas: 3
+    ports:
+      - '8000:8000'
+    environment:
+        - REDIS_HOST=redis
+        - MOVE_VALIDATOR_ENDPOINT=http://move_validator:8001
+
+  redis:
+    image: redis:7.0.5 
+    deploy:
+      replicas: 1
+
+  move_validator:
+    image: move_validator:latest
+    deploy:
+      replicas: 3
+    environment:
+      - REDIS_HOST=redis
+
+  endgame_validator:
+    image: endgame_validator:latest
+    deploy:
+      replicas: 1
+    environment:
+      - REDIS_HOST=redis

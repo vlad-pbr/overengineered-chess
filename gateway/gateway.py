@@ -37,6 +37,9 @@ app.add_middleware(
         "http://localhost:4200",
         "http://localhost:80",
         "http://localhost",
+        "http://127.0.0.1:4200",
+        "http://127.0.0.1:80",
+        "http://127.0.0.1"
     ],
     allow_methods=["*"],
     allow_headers=["*"]
@@ -144,12 +147,10 @@ def perform_move(game_id: int, move: Move = Body()):
             f"delegating game id {game_id} move validation for the following move: {move.dict()}")
 
         # post move to move validator
-        response = requests.post(os.getenv(
-            "MOVE_VALIDATOR_ENDPOINT",
-            f"http://localhost:8001/validate"),
-            data=move.json(),
-            params={"game_id": game_id},
-            timeout=10)
+        response = requests.post(f'{os.getenv("MOVE_VALIDATOR_ENDPOINT", "http://localhost:8001")}/validate',
+                                 data=move.json(),
+                                 params={"game_id": game_id},
+                                 timeout=10)
 
         # raise exception on server-side errors
         if response.status_code >= 500:
