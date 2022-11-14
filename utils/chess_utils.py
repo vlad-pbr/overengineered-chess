@@ -551,6 +551,10 @@ def write_event_to_game(game_id: int, redis: Redis, event: GameEvent):
 
     redis.xadd(stream_key_from_id(game_id), {"data": json.dumps(event.dict())})
 
+def write_event_to_endgame_validator(game_id: int, redis: Redis, stream: str):
+    """Writes move event to endgame validator stream."""
+
+    redis.xadd(stream, {"game_id": game_id})
 
 def init_game(game_id: int, redis: Redis):
     """Inits empty redis stream for a game of chess."""
