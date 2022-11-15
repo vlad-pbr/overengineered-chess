@@ -1,7 +1,7 @@
 microservices = ['move_validator', 'endgame_validator', 'gateway']
 
 def get_image_name(service) {
-    return "docker.io/vladpbr/overengineered-chess-${service}:${env.BUILD_ID}"
+    return "vladpbr/overengineered-chess-${service}:${env.BUILD_ID}"
 }
 
 pipeline {
@@ -12,7 +12,7 @@ pipeline {
             steps {
                 script {
 
-                    docker.withRegistry('https://docker.io', 'dockerio-credentials') {
+                    docker.withRegistry('', 'dockerio-credentials') {
 
                         // build client
                         def image = docker.build(get_image_name("client"), "-f ${env.WORKSPACE}/client/Dockerfile ${env.WORKSPACE}/client")
