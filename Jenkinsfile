@@ -13,11 +13,13 @@ pipeline {
                     docker.withRegistry('', 'dockerio-credentials') {
                         // build client
                         def image = docker.build(get_image_name('client'), "-f ${env.WORKSPACE}/client/Dockerfile ${env.WORKSPACE}/client")
+                        image.push()
 
                         // build backend microservices
                         backend_microservices.each { microservice ->
                             script {
                                 sh "cd ${microservice} && tar -czh . | docker build - -t ${get_image_name(microservice)}"
+                                sh "docker push ${get_image_name(microservice)}"
                             }
                         }
                     }
@@ -37,6 +39,15 @@ pipeline {
                             }
                         }
                     }
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    sh "docker stack rm overengineered-chess || true"
+                    sh "IMAGE_TAG=${env.BUILD_ID} docker stack deploy --compose-file deploy/docker-compose.yml overengineered-chess"
                 }
             }
         }
