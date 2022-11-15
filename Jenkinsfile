@@ -1,4 +1,4 @@
-microservices = ['move_validator', 'endgame_validator', 'gateway']
+backend_microservices = ['move_validator', 'endgame_validator', 'gateway']
 
 def get_image_name(service) {
     return "vladpbr/overengineered-chess-${service}:${env.BUILD_ID}"
@@ -16,13 +16,11 @@ pipeline {
 
                         // build client
                         def image = docker.build(get_image_name("client"), "-f ${env.WORKSPACE}/client/Dockerfile ${env.WORKSPACE}/client")
-                        image.push()
                     
-                        // build microservices
-                        microservices.each { microservice ->
+                        // build backend microservices
+                        backend_microservices.each { microservice ->
                             script {
                                 sh "cd ${microservice} && tar -czh . | docker build - -t ${get_image_name(microservice)}"
-                                sh "docker push ${get_image_name(microservice)}"
                             }
                         }
 
@@ -36,7 +34,7 @@ pipeline {
                 script {
 
                     // test all backend microservices
-                    microservices.each { microservice ->
+                    backend_microservices.each { microservice ->
                             script {
                                 docker.image(get_image_name(microservice)).withRun('--entrypoint pytest')
                             }
