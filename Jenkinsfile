@@ -30,8 +30,7 @@ pipeline {
                 script {
                     // test all backend microservices
                     backend_microservices.each { microservice ->
-                        echo "hello"
-                            // docker.image(get_image_name(microservice)).withRun('--entrypoint pytest')
+                        docker.image(get_image_name(microservice)).withRun('--entrypoint pytest') {}
                     }
                 }
                 
