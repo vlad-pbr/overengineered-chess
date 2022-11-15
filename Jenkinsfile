@@ -30,12 +30,13 @@ pipeline {
                 script {
                     // test all backend microservices
                     backend_microservices.each { microservice ->
-                        docker.image(get_image_name(microservice)).inside("--entrypoint=''") {
-                            sh "cd /app && pytest"
+                        docker.image('redis:7.0.5').withRun('--name redis') {
+                            docker.image(get_image_name(microservice)).inside("--entrypoint='' -e REDIS_HOST=redis") {
+                                sh 'cd /app && pytest'
+                            }
                         }
                     }
                 }
-                
             }
         }
     }
