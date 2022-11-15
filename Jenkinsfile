@@ -27,14 +27,11 @@ pipeline {
 
         stage('Test') {
             steps {
-                script {
-                    // test all backend microservices
-                    backend_microservices.each { microservice ->
-                            docker.image(get_image_name(microservice)).withRun('--entrypoint pytest')
-                    }
+                // test all backend microservices
+                backend_microservices.each { microservice ->
+                        docker.image(get_image_name(microservice)).withRun('--entrypoint pytest')
                 }
             }
         }
-
     }
 }
