@@ -3,9 +3,9 @@ pipeline {
     stages {
         stage("Build") {
             steps {
-                echo "Nice build"
                 script {
-                    def image = docker.build("my-image:latest", "-f ${env.WORKSPACE}/gateway/Dockerfile .")
+                    def image = docker.build("docker.io/vladpbr/overengineered-chess-client:${env.BUILD_ID}", "-f ${env.WORKSPACE}/client/Dockerfile ${env.WORKSPACE}/client")
+                    image.push()
                 }
             }
         }
