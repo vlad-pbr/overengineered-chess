@@ -46,8 +46,8 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    sh "docker stack rm overengineered-chess || true"
-                    sh "IMAGE_TAG=${env.BUILD_ID} docker stack deploy --compose-file deploy/docker-compose.yml overengineered-chess"
+                    sh 'docker stack rm overengineered-chess || true'
+                    sh 'IMAGE_TAG=${env.BUILD_ID} docker stack deploy --compose-file deploy/docker-compose.yml overengineered-chess'
                 }
             }
         }
