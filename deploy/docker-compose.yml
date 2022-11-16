@@ -8,8 +8,9 @@ services:
       replicas: 3
     ports:
       - '80:80'
-    volumes:
-      - ./env.json:/usr/share/nginx/html/env.json:ro
+    configs:
+      - source: env
+        target: /usr/share/nginx/html/env.json
     depends_on:
       - gateway
 
@@ -49,3 +50,7 @@ services:
       - REDIS_HOST=redis
     depends_on:
       - redis
+
+configs:
+  env:
+    external: true
