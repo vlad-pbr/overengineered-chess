@@ -3,18 +3,19 @@ version: "3.8"
 services:
 
   client:
-    image: client:latest
+    image: "vladpbr/overengineered-chess-client:${IMAGE_TAG}"
     deploy:
       replicas: 3
     ports:
       - '80:80'
-    volumes:
-      - ./env.json:/usr/share/nginx/html/env.json:ro
+    configs:
+      - source: env
+        target: /usr/share/nginx/html/env.json
     depends_on:
       - gateway
 
   gateway:
-    image: gateway:latest
+    image: "vladpbr/overengineered-chess-gateway:${IMAGE_TAG}"
     deploy:
       replicas: 3
     ports:
@@ -33,7 +34,7 @@ services:
       replicas: 1
 
   move_validator:
-    image: move_validator:latest
+    image: "vladpbr/overengineered-chess-move_validator:${IMAGE_TAG}"
     deploy:
       replicas: 3
     environment:
@@ -42,10 +43,14 @@ services:
       - redis
 
   endgame_validator:
-    image: endgame_validator:latest
+    image: "vladpbr/overengineered-chess-endgame_validator:${IMAGE_TAG}"
     deploy:
       replicas: 1
     environment:
       - REDIS_HOST=redis
     depends_on:
       - redis
+
+configs:
+  env:
+    external: true
