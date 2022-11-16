@@ -83,6 +83,7 @@ For the purpose of this exercise, we will deploy a custom Jenkins image (with Do
 
 ## Prerequisites
 
+- linux machine
 - `docker-ce` installed w/ swarm support
 - this repo cloned on your machine
 
@@ -91,17 +92,17 @@ For the purpose of this exercise, we will deploy a custom Jenkins image (with Do
 Build the custom Jenkins image from the `jenkins` directory:
 
 ```sh
-docker build -t docker.io/vladpbr/overengineered-chess-jenkins:2.377 jenkins/
+docker build -t vladpbr/overengineered-chess-jenkins:2.377 jenkins/
 ```
 
 Now deploy it using the following command:
 
 ```sh
-docker run --name jenkins -d -v ~/jenkins_home:/var/jenkins_home -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 docker.io/vladpbr/overengineered-chess-jenkins:2.377
+docker run --name jenkins -d -v ~/jenkins_home:/var/jenkins_home -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 --dns 8.8.8.8 vladpbr/overengineered-chess-jenkins:2.377
 ```
 
-Access Jenkins via `http://localhost:8080`, enter credentials (as seen in `docker logs jenkins`), install default plugins upon request, "skip and continue as admin", "not now", "start using jenkins".
+Access Jenkins via `http://localhost:8080`, enter credentials (as seen in `docker logs jenkins`), install default plugins upon request, "skip and continue as admin", "not now", "start using jenkins". Now install Docker Pipeline plugin using Dashboard > Manage Jenkins > Manage Plugins > Available (tab) > docker-workflow.
 
 ## Deployment pipeline
 
-TODO
+Create a new multibranch pipeline with the SCM source being this repo, create a user-password credentials object with id `dockerio-credentials` and your `docker.io` credentials, then build. The pipeline will build all images, run tests and then deploy the application on the local machine.
