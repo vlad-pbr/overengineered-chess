@@ -1,14 +1,17 @@
 <div id="menu">
     <div>
         <span>Color</span>
-        <input type="radio" id="color-white" name="color" value="white" checked><label for="color-white">White</label>
-        <input type="radio" id="color-black" name="color" value="black"><label for="color-black">Black</label>
+        <span *ngFor="let color of [ 'white', 'black' ]">
+            <input type="radio" name="color" [id]="'color-' + color" [value]="color"
+                [checked]="is_white === (color === 'white')" (input)="handle_color_change($event)">
+            <label [for]="'color-' + color">{{ color }}</label>
+        </span>
     </div>
     <div>
         <span>Game ID</span>
-        <input id="game-id" type="text" value="1" (input)="handleIDchange()">
+        <input type="text" value="1" (input)="handle_id_change($event)">
     </div>
-    <button class="menu-button" role="button" (click)="create(get_id())">Create Game</button>
-    <button class="menu-button" role="button" (click)="join(get_id())">Join Game</button>
-    <p id="log"></p>
+    <button class="menu-button" role="button" (click)="create(game_id)" [disabled]="isNaN(game_id)">Create Game</button>
+    <button class="menu-button" role="button" (click)="join(game_id)" [disabled]="isNaN(game_id)">Join Game</button>
+    <p id="log">{{ log }}</p>
 </div>

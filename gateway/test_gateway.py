@@ -17,8 +17,8 @@ def test_create_game():
     game_id = 1
     request = {
         "url": f"/game/{game_id}/create",
-        "data": dumps(Move(src_coordinate=Coordinate.from_literals(
-            0, 6), dest_coordinate=Coordinate.from_literals(0, 4)).dict())
+        "data": dumps(Move(src_coordinate=Coordinate(
+            x=0, y=6), dest_coordinate=Coordinate(x=0, y=4)).dict())
     }
 
     # make sure game does not exist yet
@@ -43,7 +43,7 @@ def test_join_game():
     # init new game and make a move
     game_id = 1
     mge = MoveGameEvent(move=(Move(
-        src_coordinate=Coordinate.from_literals(0, 6), dest_coordinate=Coordinate.from_literals(0, 4))))
+        src_coordinate=Coordinate(x=0, y=6), dest_coordinate=Coordinate(x=0, y=4))))
     init_game(game_id, redis)
     write_event_to_game(game_id, redis, mge)
 

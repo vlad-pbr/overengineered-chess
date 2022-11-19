@@ -16,8 +16,8 @@ def test_validate():
     game_id = 1
     request = {
         "url": "/validate",
-        "data": dumps(Move(src_coordinate=Coordinate.from_literals(
-            0, 6), dest_coordinate=Coordinate.from_literals(0, 4)).dict()),
+        "data": dumps(Move(src_coordinate=Coordinate(
+            x=0, y=6), dest_coordinate=Coordinate(x=0, y=4)).dict()),
         "params": {"game_id": game_id}
     }
 

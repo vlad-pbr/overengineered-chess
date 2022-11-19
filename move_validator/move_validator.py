@@ -10,7 +10,7 @@ via redis stream.
 import os
 import logging
 from redis import Redis
-from chess_utils import Move, ChessBoard, MoveGameEvent, game_exists, write_event_to_game
+from chess_utils import Move, ChessBoard, MoveGameEvent, game_exists, write_event_to_game, write_event_to_endgame_validator
 from fastapi import FastAPI, Response, Body, status
 from fastapi.logger import logger as fastapi_logger
 
@@ -37,7 +37,7 @@ def validate_move(game_id: int, move: Move = Body()):
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
     # init board for given game
-    board = ChessBoard(game_id, redis)
+    board = ChessBoard.from_redis(game_id, redis)
 
     # check if move is valid
     if not board.move(move):
@@ -50,5 +50,5 @@ def validate_move(game_id: int, move: Move = Body()):
     # notify endgame validator
     logger.info(
         f"sending game id {game_id} move notification to endgame validator")
-    redis.xadd(os.getenv("ENDGAME_STREAM_NAME",
-               "endgame"), {"game_id": game_id})
+    write_event_to_endgame_validator(
+        game_id, redis, os.getenv("ENDGAME_STREAM_NAME", "endgame"))

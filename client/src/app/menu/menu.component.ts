@@ -1,8 +1,9 @@
-import { Component, ComponentFactoryResolver, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
-import { WebsocketService } from '../websocket.service'
+import { WebsocketService } from '../shared/services/websocket.service'
+import { ENV } from '../shared/env'
 
 @Component({
   selector: 'app-menu',
@@ -11,21 +12,24 @@ import { WebsocketService } from '../websocket.service'
 })
 export class MenuComponent implements OnInit {
 
+  log: string = ""
+  game_id: number = 1
+  is_white: boolean = true
+  isNaN = isNaN
+
   constructor(private websocketService: WebsocketService, private router: Router, private http: HttpClient) { }
 
-  log(message: string): void {
-    (document.getElementById("log") as HTMLParagraphElement).textContent = message
-  }
+  ngOnInit(): void { }
 
   create(game_id: number) {
 
     // try creating game with given ID
-    this.http.post(`http://localhost:8000/game/${game_id}/create`, null).subscribe({
+    this.http.post(`${ENV.GATEWAY_HTTP_ENDPOINT}/game/${game_id}/create`, null).subscribe({
       complete: () => {
         this.join(game_id)
       },
       error: (e) => {
-        this.log((e as HttpErrorResponse).error)
+        this.log = (e as HttpErrorResponse).error
       }
     })
 
@@ -33,44 +37,31 @@ export class MenuComponent implements OnInit {
 
   join(game_id: number) {
 
-    this.log("Connecting...")
+    this.log = "Connecting..."
 
     // connect to server
-    this.websocketService.connect(`/game/${game_id}/join`, () => {
+    this.websocketService.connect(game_id, () => {
 
       // change view to actual game
-      this.router.navigate([`/game/${game_id}`], {
+      this.router.navigate(["/game"], {
         queryParams: {
-          is_white: this.white_chosen()
+          game_id: this.game_id,
+          is_white: this.is_white
         }
       })
 
     }, () => {
-
-      this.log(`Game with ID ${game_id} does not exist.`)
-
+      this.log = `Game with ID ${game_id} does not exist.`
     })
 
   }
 
-  get_id(): number {
-    return parseInt((document.getElementById("game-id") as HTMLInputElement).value)
+  handle_id_change(e: Event): void {
+    this.game_id = parseInt((e.target as HTMLInputElement).value)
   }
 
-  white_chosen(): boolean {
-    return (document.querySelector("input[name=color]:checked") as HTMLInputElement).value === "white"
+  handle_color_change(e: Event): void {
+    this.is_white = (e.target as HTMLInputElement).value === "white"
   }
-
-  handleIDchange(): void {
-
-    // disable buttons on invalid game ID
-    let buttons = document.getElementsByClassName("menu-button") as HTMLCollectionOf<HTMLButtonElement>
-    for (let i = 0; i < buttons.length; i++) {
-      buttons[i].disabled = isNaN(this.get_id()) ? true : false
-    }
-
-  }
-
-  ngOnInit(): void { }
 
 }

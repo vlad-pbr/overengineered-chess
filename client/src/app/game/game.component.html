@@ -1,18 +1,31 @@
-<div *ngIf="this.check_conditions(); else elseBlock" id="chessboard">
+<div *ngIf="is_connected() && !!!connection_error && init_complete; else disconnected" id="chessboard">
     <div id="info-bar">
         <div class="info-bar-item">Game ID: {{ game_id }}</div>
         <div class="info-bar-item">Your color: {{ is_white ? "White" : "Black" }}</div>
         <div class="info-bar-item">Turn: {{ turn_white ? "White" : "Black" }}</div>
     </div>
-    <div class="chessboard-row" *ngFor="let y of [ 0, 1, 2, 3, 4, 5, 6, 7 ]">
-        <div [id]="'chesspiece-' + x + '-' + y" *ngFor="let x of [ 0, 1, 2, 3, 4, 5, 6, 7 ]" (click)="handle_select(x, y)" [style]="'background-color: ' + (x % 2 != y % 2 ? colors.black : colors.white) + ';'">
-            <img *ngIf="chessboard[y][x]" [src]="'/assets/' + chessboard[y][x]?.image">
+    <div class="chessboard-row" *ngFor="let y of range(0, chessboard.length)">
+        <div
+        *ngFor="let x of range(0, chessboard[0].length)"
+        [id]="'chesspiece-' + x + '-' + y"
+        [class]="get_chessboard_spot_class(x, y)"
+        (click)="handle_select(x, y)">
+            <img *ngIf="chessboard[y][x]" [src]="chessboard[y][x]!.image">
         </div>
     </div>
-    <b><p class="log" id="log"></p></b>
-    <p class="log" id="connection-log"></p>
+    <b><p class="log" id="log">{{ log }}</p></b>
 </div>
 
-<ng-template #elseBlock>
-    Invalid request. Go back to <a href="/menu">menu</a>.
+<ng-template #disconnected>
+    <div *ngIf="check_params(); else invalidParams">
+        <div *ngIf="connection_error; else connecting">
+            Could not connect to game {{ game_id }}: {{ connection_error }}
+        </div>
+        <ng-template #connecting>
+            {{ connection_log }}
+        </ng-template>
+    </div>
+    <ng-template #invalidParams>
+        Invalid request. Go back to <a href="/menu">menu</a>.
+    </ng-template>
 </ng-template>
